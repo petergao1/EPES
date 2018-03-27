@@ -1,0 +1,50 @@
+CREATE TABLE department{
+name varchar(32) NOT NULL,
+head varchar(32) NOT NULL,
+CONSTRAINT department_pkey PRIMARY KEY (name)
+}
+
+CREATE TABLE manager{
+manager_id varchar(32) NOT NULL,
+name varchar(32) NOT NULL, 
+annual_salary bigint,
+CONSTRAINT manager_pkey PRIMARY KEY (manager_id),
+CONSTRAINT manager_annual_salary_fkey  FOREIGN KEY(annual_salary)
+REFERENCES annual_salary(salary_id) MATCH SIMPLE
+ON UPDATE CASCADE ON DELETE NO ACTION
+}
+
+CREATE TABLE annual_salary{
+salary_id varchar(16) NOT NULL,
+pay bigint,
+bonus bigint
+}
+
+CREATE TABLE employee{
+employee_id varchar(32) NOT NULL,
+name varchar(32) NOT NULL, 
+department varchar(20) NOT NULL,
+CONSTRAINT employee_pkey PRIMARY KEY (employee_id),
+CONSTRAINT employee_department_fkey  FOREIGN KEY(department)
+REFERENCES department(name) MATCH SIMPLE
+ON UPDATE CASCADE ON DELETE NO ACTION
+}
+
+CREATE TABLE work_day{
+day date NOT NULL,
+employee_id varchar(32) NOT NULL,
+wage_id varchar(16) NOT NULL,
+CONSTRAINT work_day_pkey PRIMARY KEY (day, employee_id),
+CONSTRAINT work_day_employee_id_fkey  FOREIGN KEY(employee_id)
+REFERENCES employee(employee_id) MATCH SIMPLE
+ON UPDATE CASCADE ON DELETE NO ACTION
+CONSTRAINT work_day_wage_id_fkey  FOREIGN KEY(wage_id)
+REFERENCES wage(wage_id) MATCH SIMPLE
+ON UPDATE CASCADE ON DELETE NO ACTION
+}
+
+CREATE TABLE wage{
+wage_id varchar(16) NOT NULL,
+pay bigint,
+bonus bigint
+}
