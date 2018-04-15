@@ -11,25 +11,53 @@ decision = "Bazinga"
 employeeID = 0000
 
 
-def clicked1():
-    comment = txt1.get("1.0", "end-1c")
-    targetEmployee = combo1.get()
-    testingComment(comment,targetEmployee)
+def writecomment():
+    tmpcomment = txt1.get("1.0", "end-1c")
+    targetemployee = combo1.get()
+    if tmpcomment != "":
+        window1 = Tk()
+        window1.title("Input successful")
+        window1.geometry('500x500')
+        lbl1_1 = Label(window1, text="System received your comment to employee " + targetemployee)
+        lbl1_1.grid(column=0, row=0)
+        lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
+        lbl1_2.grid(column=0, row=1)
+    else:
+        window1 = Tk()
+        window1.title("ERROR MESSAGE")
+        window1.geometry('300x50')
+        lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+        lbl1_1.grid(column=0, row=0)
+    testingComment(tmpcomment, targetemployee)
 
 
-def clicked2():
-    respond = txt2.get("1.0", "end-1c")
-    targetEmployee = combo2.get()
-    testingRespond(respond,targetEmployee)
+def writerespond():
+    tmprespond = txt2.get("1.0", "end-1c")
+    targetemployee = combo2.get()
+    if tmprespond != "":
+        window1 = Tk()
+        window1.title("Input successful")
+        window1.geometry('500x500')
+        lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
+        lbl1_1.grid(column=0, row=0)
+        lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
+        lbl1_2.grid(column=0, row=1)
+    else:
+        window1 = Tk()
+        window1.title("ERROR MESSAGE")
+        window1.geometry('300x50')
+        lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+        lbl1_1.grid(column=0, row=0)
+    testingRespond(tmprespond, targetemployee)
 
 
-def clicked3():
+def viewpayroll():
     res = "Your payroll is: " + get_payroll()
     lbl3.configure(text=res)
     testingPayroll()
 
 
-def clicked4():
+def viewratings():
     res = "Your rating is: " + get_ratings()
     lbl4.configure(text=res)
     testingRatings()
@@ -95,7 +123,7 @@ txt1 = Text(window,width=40,height=10)
 txt1.grid(column=1, row=0)
 txt1.focus()
 
-btn1 = Button(window, text="Send Comment", command=clicked1)
+btn1 = Button(window, text="Send Comment", command=writecomment)
 btn1.grid(column=3, row=0)
 
 combo1 = Combobox(window)
@@ -109,7 +137,7 @@ lbl2.grid(column=0, row=1)
 txt2 = Text(window,width=40,height=10)
 txt2.grid(column=1, row=1)
 
-btn2 = Button(window, text="Send Respond", command=clicked2)
+btn2 = Button(window, text="Send Respond", command=writerespond)
 btn2.grid(column=3, row=1)
 
 combo2 = Combobox(window)
@@ -117,13 +145,13 @@ combo2['values'] = (1, 2, 3, 4, 5, "Text")
 combo2.current(0)  # set the selected item
 combo2.grid(column=2, row=1)
 
-btn3 = Button(window, text="View Payroll", command=clicked3)
+btn3 = Button(window, text="View Payroll", command=viewpayroll)
 btn3.grid(column=1, row=2)
 
 lbl3 = Label(window, text="Your payroll is: ")
 lbl3.grid(column=0, row=2)
 
-btn4 = Button(window, text="View Ratings", command=clicked4)
+btn4 = Button(window, text="View Ratings", command=viewratings)
 btn4.grid(column=1, row=3)
 
 lbl4 = Label(window, text="Your rating is: ")
