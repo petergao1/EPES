@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
+import hrSystem
 
 payroll = 0;
 ratings = "YOU SUCK"
@@ -145,61 +146,62 @@ def testExecution():
         print("Execution functionality test failed!")
 
 
-window = Tk()
-window.title("HRDepartmentUI")
-window.geometry('700x450')
+if __name__ == "__main__":
+    window = Tk()
+    window.title("HRDepartmentUI")
+    window.geometry('700x450')
 
-lbl1 = Label(window, text="Write comment")
-lbl1.grid(column=0, row=0)
+    lbl1 = Label(window, text="Write comment")
+    lbl1.grid(column=0, row=0)
 
-txt1 = Text(window,width=40,height=10)
-txt1.grid(column=1, row=0)
-txt1.focus()
+    txt1 = Text(window,width=40,height=10)
+    txt1.grid(column=1, row=0)
+    txt1.focus()
 
-btn1 = Button(window, text="Send Comment", command=writecomment)
-btn1.grid(column=3, row=0)
+    btn1 = Button(window, text="Send Comment", command=writecomment)
+    btn1.grid(column=3, row=0)
 
-combo1 = Combobox(window)
-combo1['values'] = (1, 2, 3, 4, 5, "Text")
-combo1.current(0)  # set the selected item
-combo1.grid(column=2, row=0)
+    combo1 = Combobox(window)
+    combo1['values'] = (1, 2, 3, 4, 5, "Text")
+    combo1.current(0)  # set the selected item
+    combo1.grid(column=2, row=0)
 
-lbl2 = Label(window, text="Write respond")
-lbl2.grid(column=0, row=1)
+    lbl2 = Label(window, text="Write respond")
+    lbl2.grid(column=0, row=1)
 
-txt2 = Text(window,width=40,height=10)
-txt2.grid(column=1, row=1)
+    txt2 = Text(window,width=40,height=10)
+    txt2.grid(column=1, row=1)
 
-btn2 = Button(window, text="Send Respond", command=writerespond)
-btn2.grid(column=3, row=1)
+    btn2 = Button(window, text="Send Respond", command=writerespond)
+    btn2.grid(column=3, row=1)
 
-combo2 = Combobox(window)
-combo2['values'] = (1, 2, 3, 4, 5, "Text")
-combo2.current(0)  # set the selected item
-combo2.grid(column=2, row=1)
+    combo2 = Combobox(window)
+    combo2['values'] = (1, 2, 3, 4, 5, "Text")
+    combo2.current(0)  # set the selected item
+    combo2.grid(column=2, row=1)
 
-btn3 = Button(window, text="View Payroll", command=viewpayroll)
-btn3.grid(column=1, row=2)
+    btn3 = Button(window, text="View Payroll", command=viewpayroll)
+    btn3.grid(column=1, row=2)
 
-lbl3 = Label(window, text="Your payroll is: ")
-lbl3.grid(column=0, row=2)
+    lbl3 = Label(window, text="Your payroll is: ")
+    lbl3.grid(column=0, row=2)
 
-btn4 = Button(window, text="View Ratings", command=viewratings)
-btn4.grid(column=1, row=3)
+    btn4 = Button(window, text="View Ratings", command=viewratings)
+    btn4.grid(column=1, row=3)
 
-lbl4 = Label(window, text="Your rating is: ")
-lbl4.grid(column=0, row=3)
+    lbl4 = Label(window, text="Your rating is: ")
+    lbl4.grid(column=0, row=3)
 
-lbl5 = Label(window, text="Your working hours: ")
-lbl5.grid(column=0, row=4)
+    lbl5 = Label(window, text="Your working hours: ")
+    lbl5.grid(column=0, row=4)
 
-txt5 = Entry(window, width=40)
-txt5.grid(column=1, row=4)
+    txt5 = Entry(window, width=40)
+    txt5.grid(column=1, row=4)
 
-btn5 = Button(window, text="Set hours:", command=setHours)
-btn5.grid(column=2, row=4)
+    btn5 = Button(window, text="Set hours:", command=setHours)
+    btn5.grid(column=2, row=4)
 
-btn6 = Button(window, text="Execute Decisions", command=execute)
-btn6.grid(column=2, row=5)
+    btn6 = Button(window, text="Execute Decisions", command=execute)
+    btn6.grid(column=2, row=5)
 
-window.mainloop()
+    window.mainloop()

@@ -26,24 +26,25 @@ def testLogin(un,pw):
         print("Login functionality test failed")
 
 
-window = Tk()
-window.title("MainUI")
-window.geometry('400x150')
+if __name__ == "__main__":
+    window = Tk()
+    window.title("MainUI")
+    window.geometry('400x150')
 
-lbl1 = Label(window, text="Username:")
-lbl1.grid(column=0, row=0)
+    lbl1 = Label(window, text="Username:")
+    lbl1.grid(column=0, row=0)
 
-txt1 = Entry(window,width=20)
-txt1.grid(column=1, row=0)
-txt1.focus()
+    txt1 = Entry(window,width=20)
+    txt1.grid(column=1, row=0)
+    txt1.focus()
 
-lbl2 = Label(window, text="Password:")
-lbl2.grid(column=0, row=1)
+    lbl2 = Label(window, text="Password:")
+    lbl2.grid(column=0, row=1)
 
-txt2 = Entry(window,width=20)
-txt2.grid(column=1, row=1)
+    txt2 = Entry(window,width=20)
+    txt2.grid(column=1, row=1)
 
-btn = Button(window, text="Login", command=clicked)
-btn.grid(column=1, row=2)
+    btn = Button(window, text="Login", command=clicked)
+    btn.grid(column=1, row=2)
 
-window.mainloop()
+    window.mainloop()
