@@ -62,11 +62,14 @@ class newMainUI():
 
 
 class departmentStaffUI:
+
     def __init__(self, master):
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
         self.frame = tk.Frame(self.master)
+        self.payroll = 0
+        self.ratings = "Test"
         # Logout
         self.logout = tk.Button(self.frame, text="Logout", command=self.logout)
         # Comment
@@ -117,23 +120,56 @@ class departmentStaffUI:
 
     def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
-        print(tmpcomment)
+        targetemployee = self.comboxlist.get()
+        if tmpcomment != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your comment to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def writerespond(self):
         tmprespond = self.commententry.get("1.0", "end-1c")
-        print(tmprespond)
+        targetemployee = self.comboxlist_2.get()
+        if tmprespond != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def view_payroll(self):
-        window1 = Tk()
-        window1.title("Payroll Checking")
-        window1.geometry('300x50')
+        self.payrolllabel.configure(text="Your payroll is: " + self.get_payroll())
 
     def view_ratings(self):
+        global ratings
+        ratings = "test"
         window1 = Tk()
         window1.title("Ratings Checking")
         window1.geometry('300x50')
+        lbl1_1 = Label(window1, text="Your ratings:")
+        lbl1_1.grid(column=0, row=0)
+        lbl1_2 = Label(window1, text=" " + self.get_ratings())
+        lbl1_2.grid(column=0, row=1)
 
     def set_hours(self):
+        global payroll
         workinghours = self.hoursentry.get()
         if workinghours.replace('.', '', 1).isdigit():
             window1 = Tk()
@@ -145,7 +181,7 @@ class departmentStaffUI:
             lbl1_2.grid(column=0, row=1)
             lbl1_2 = Label(window1, text="Your working hours this month is: " + workinghours + " hours")
             lbl1_2.grid(column=0, row=2)
-            #payroll = float(workinghours) * 150
+            payroll = float(workinghours) * 150
         elif workinghours == "":
             window1 = Tk()
             window1.title("ERROR MESSAGE")
@@ -163,12 +199,20 @@ class departmentStaffUI:
         root.deiconify()
         self.master.destroy()
 
+    def get_payroll(self):
+        return str(payroll)
+
+    def get_ratings(self):
+        return ratings
+
 class departmentManagerUI:
     def __init__(self, master):
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
         self.frame = tk.Frame(self.master)
+        self.payroll = 0
+        self.ratings = ""
         # Comment
         self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
         self.comvalue = tk.StringVar()
@@ -238,23 +282,56 @@ class departmentManagerUI:
 
     def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
-        print(tmpcomment)
+        targetemployee = self.comboxlist.get()
+        if tmpcomment != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your comment to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def writerespond(self):
         tmprespond = self.commententry.get("1.0", "end-1c")
-        print(tmprespond)
+        targetemployee = self.comboxlist_2.get()
+        if tmprespond != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def view_payroll(self):
-        window1 = Tk()
-        window1.title("Payroll Checking")
-        window1.geometry('300x50')
+        self.payrolllabel.configure(text="Your payroll is: " + self.get_payroll())
 
     def view_ratings(self):
+        global ratings
+        ratings = "test"
         window1 = Tk()
         window1.title("Ratings Checking")
         window1.geometry('300x50')
+        lbl1_1 = Label(window1, text="Your ratings:")
+        lbl1_1.grid(column=0, row=0)
+        lbl1_2 = Label(window1, text=" " + self.get_ratings())
+        lbl1_2.grid(column=0, row=1)
 
     def set_hours(self):
+        global payroll
         workinghours = self.hoursentry.get()
         if workinghours.replace('.', '', 1).isdigit():
             window1 = Tk()
@@ -266,7 +343,7 @@ class departmentManagerUI:
             lbl1_2.grid(column=0, row=1)
             lbl1_2 = Label(window1, text="Your working hours this month is: " + workinghours + " hours")
             lbl1_2.grid(column=0, row=2)
-            #payroll = float(workinghours) * 150
+            payroll = float(workinghours) * 150
         elif workinghours == "":
             window1 = Tk()
             window1.title("ERROR MESSAGE")
@@ -312,6 +389,15 @@ class departmentManagerUI:
         window = Tk()
         window.title("Approval")
         window.geometry('500x300')
+        text = "Employee " + str(self.comboxlist_3.get()) + "'s working hour has been approved"
+        lbl7 = Label(window, text=text)
+        lbl7.grid(column=0, row=0)
+
+    def get_payroll(self):
+        return str(payroll)
+
+    def get_ratings(self):
+        return ratings
 
 class HRDepartmentUI:
     def __init__(self, master):
@@ -319,6 +405,8 @@ class HRDepartmentUI:
         # and a button to do the computation
         self.master = master
         self.frame = tk.Frame(self.master)
+        self.payroll = 0
+        self.ratings = ""
         # Comment
         self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
         self.comvalue = tk.StringVar()
@@ -371,23 +459,56 @@ class HRDepartmentUI:
 
     def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
-        print(tmpcomment)
+        targetemployee = self.comboxlist.get()
+        if tmpcomment != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your comment to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def writerespond(self):
         tmprespond = self.commententry.get("1.0", "end-1c")
-        print(tmprespond)
+        targetemployee = self.comboxlist_2.get()
+        if tmprespond != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def view_payroll(self):
-        window1 = Tk()
-        window1.title("Payroll Checking")
-        window1.geometry('300x50')
+        self.payrolllabel.configure(text="Your payroll is: " + self.get_payroll())
 
     def view_ratings(self):
+        global ratings
+        ratings = "test"
         window1 = Tk()
         window1.title("Ratings Checking")
         window1.geometry('300x50')
+        lbl1_1 = Label(window1, text="Your ratings:")
+        lbl1_1.grid(column=0, row=0)
+        lbl1_2 = Label(window1, text=" " + self.get_ratings())
+        lbl1_2.grid(column=0, row=1)
 
     def set_hours(self):
+        global payroll
         workinghours = self.hoursentry.get()
         if workinghours.replace('.', '', 1).isdigit():
             window1 = Tk()
@@ -399,7 +520,7 @@ class HRDepartmentUI:
             lbl1_2.grid(column=0, row=1)
             lbl1_2 = Label(window1, text="Your working hours this month is: " + workinghours + " hours")
             lbl1_2.grid(column=0, row=2)
-            #payroll = float(workinghours) * 150
+            payroll = float(workinghours) * 150
         elif workinghours == "":
             window1 = Tk()
             window1.title("ERROR MESSAGE")
@@ -421,6 +542,11 @@ class HRDepartmentUI:
         root.deiconify()
         self.master.destroy()
 
+    def get_payroll(self):
+        return str(payroll)
+
+    def get_ratings(self):
+        return ratings
 
 class SeniorManagerUI:
     def __init__(self, master):
@@ -428,6 +554,8 @@ class SeniorManagerUI:
         # and a button to do the computation
         self.master = master
         self.frame = tk.Frame(self.master)
+        self.payroll = 0
+        self.ratings = ""
         # Comment
         self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
         self.comvalue = tk.StringVar()
@@ -482,23 +610,56 @@ class SeniorManagerUI:
 
     def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
-        print(tmpcomment)
+        targetemployee = self.comboxlist.get()
+        if tmpcomment != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your comment to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def writerespond(self):
         tmprespond = self.commententry.get("1.0", "end-1c")
-        print(tmprespond)
+        targetemployee = self.comboxlist_2.get()
+        if tmprespond != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
 
     def view_payroll(self):
-        window1 = Tk()
-        window1.title("Payroll Checking")
-        window1.geometry('300x50')
+        self.payrolllabel.configure(text="Your payroll is: " + self.get_payroll())
 
     def view_ratings(self):
+        global ratings
+        ratings = "test"
         window1 = Tk()
         window1.title("Ratings Checking")
         window1.geometry('300x50')
-
+        lbl1_1 = Label(window1, text="Your ratings:")
+        lbl1_1.grid(column=0, row=0)
+        lbl1_2 = Label(window1, text=" " + self.get_ratings())
+        lbl1_2.grid(column=0, row=1)
+        
     def set_hours(self):
+        global payroll
         workinghours = self.hoursentry.get()
         if workinghours.replace('.', '', 1).isdigit():
             window1 = Tk()
@@ -510,7 +671,7 @@ class SeniorManagerUI:
             lbl1_2.grid(column=0, row=1)
             lbl1_2 = Label(window1, text="Your working hours this month is: " + workinghours + " hours")
             lbl1_2.grid(column=0, row=2)
-            #payroll = float(workinghours) * 150
+            payroll = float(workinghours) * 150
         elif workinghours == "":
             window1 = Tk()
             window1.title("ERROR MESSAGE")
@@ -551,10 +712,15 @@ class SeniorManagerUI:
         changes.grid(column=1, row=2)
         btn.grid(column=2, row=2)
 
-
     def logout(self):
         root.deiconify()
         self.master.destroy()
+
+    def get_payroll(self):
+        return str(payroll)
+
+    def get_ratings(self):
+        return ratings
 
 
 class hrsystemui(tk.Frame):
