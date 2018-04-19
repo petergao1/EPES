@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import ttk
+import hrSystem
 import numpy as np
 
 
@@ -49,16 +50,16 @@ class newMainUI():
         elif self.entryun.get() == "senior":
             self.newWindow = tk.Toplevel(self.master)
             self.newWindow.title("Senior Manager")
-            self.app = hrsystemui(self.newWindow)
+            self.app = SeniorManagerUI(self.newWindow)
             root.withdraw()
 
     def close_window(self):
         root.withdraw()
 
     def HRpage(self):
-        self.newWindow1 = tk.Toplevel(root)
-        self.newWindow1.title("User Record")
-        self.app1 = hrsystemui(self.newWindow1)
+        self.newWindow = tk.Toplevel(self.master)
+        self.newWindow.title("User Record")
+        self.app = hrsystemui(self.newWindow)
 
 
 class departmentStaffUI:
@@ -535,7 +536,7 @@ class HRDepartmentUI:
             lbl1_1.grid(column=0, row=0)
 
     def execution(self):
-        print("0")
+        newMainUI.HRpage(self.master)
         # need something
 
     def logout(self):
@@ -723,40 +724,40 @@ class SeniorManagerUI:
         return ratings
 
 
-class hrsystemui(tk.Frame):
+class hrsystemui:
 
-    def __init__(self, parent):
-        tk.Frame.__init__(self, parent)
+    def __init__(self, master):
         # create a prompt, an input box, an output label,
         # and a button to do the computation
-        self.name = tk.Label(self, text="Enter a name:", anchor="w")
-        self.entryname = tk.Entry(self)
-        self.id = tk.Label(self, text="Enter a ID:", anchor="w")
-        self.entryid = tk.Entry(self)
-        self.department = tk.Label(self, text="Enter a department:", anchor="w")
-        self.entrydepartment = tk.Entry(self)
-        self.job = tk.Label(self, text="Select a job type:", anchor="w")
+        self.master = master
+        self.frame = tk.Frame(self.master)
+        self.name = tk.Label(self.frame, text="Enter a name:", anchor="w")
+        self.entryname = tk.Entry(self.frame)
+        self.id = tk.Label(self.frame, text="Enter a ID:", anchor="w")
+        self.entryid = tk.Entry(self.frame)
+        self.department = tk.Label(self.frame, text="Enter a department:", anchor="w")
+        self.entrydepartment = tk.Entry(self.frame)
+        self.job = tk.Label(self.frame, text="Select a job type:", anchor="w")
         self.comvalue = tk.StringVar()
-        self.comboxlist = ttk.Combobox(self, textvariable=self.comvalue)
+        self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist["values"] = ("Staff", "Department Manager", "Senior Manager")
         self.comboxlist.current(0)
-        self.title = tk.Label(self, text="Enter a title:", anchor="w")
-        self.entrytitle = tk.Entry(self)
-        self.submit = tk.Button(self, text="submit", command = self.action)
-        self.show = tk.Button(self, text="show the list", command = self.showList)
-        self.deleteUser = tk.Button(self, text="delete user", command = self.deletUser)
-        self.amend = tk.Button(self, text="promotion/demotion", command=self.amend)
-        self.output = tk.Label(self, text="")
+        self.title = tk.Label(self.frame, text="Enter a title:", anchor="w")
+        self.entrytitle = tk.Entry(self.frame)
+        self.submit = tk.Button(self.frame, text="submit", command=self.action)
+        self.show = tk.Button(self.frame, text="show the list", command=self.showList)
+        self.deleteUser = tk.Button(self.frame, text="delete user", command=self.deletUser)
+        self.amend = tk.Button(self.frame, text="promotion/demotion", command=self.amend)
+        self.output = tk.Label(self.frame, text="")
         self.flag = np.array("")
         self.list = np.array("")
         self.result = ""
-        self.win=""
-        self.deleteWin=""
-        self.deleteid=""
-        self.deleteWin=""
-        self.amendWin=""
-        self.namelist=tk.Label(self, text="")
-        self.header = ['name','ID','department','title','job']
+        self.win = ""
+        self.deleteWin = ""
+        self.deleteid = ""
+        self.deleteWin = ""
+        self.amendWin = ""
+        self.namelist = tk.Label(self.frame, text="")
 
         # lay the widgets out on the screen.
         self.name.pack(side="top", fill="x")
@@ -775,6 +776,8 @@ class hrsystemui(tk.Frame):
         self.amend.pack(side="right")
         self.show.pack(side="left")
 
+        self.frame.pack()
+
 
     def action(self):
         # get the value from the input widget, convert
@@ -788,13 +791,6 @@ class hrsystemui(tk.Frame):
         self.result = self.result+"\n"+"\n"+self.flag[1].__str__()
         self.list = np.append(self.list,self.flag[1])
         self.output.configure(text=self.flag[1].__str__()+"\n has been saved")
-        data = np.array([self.flag[1].get_name(),self.flag[1].get_number(),self.flag[1].get_department(),self.flag[1].get_title(),self.flag[1].get_job()])
-        df = pd.DataFrame([data])
-        if not os.path.isfile('namelist.csv'):
-            df.to_csv('namelist.csv', header=self.header,index=False)
-        else:
-            df.to_csv('namelist.csv', mode='a',header=False,index=False)
-
         self.flag = np.delete(self.flag,1)
 
 
@@ -866,9 +862,6 @@ class hrsystemui(tk.Frame):
                     self.deleteWin.destroy()
                 flag = i
         if flag != "":
-            df = pd.read_csv('namelist.csv',header=None)
-            df = df.drop(index=flag)
-            df.to_csv('namelist.csv',index=False,header=None)
             self.list=np.delete(self.list,flag,axis=0)
 
 
@@ -876,6 +869,7 @@ class hrsystemui(tk.Frame):
         self.deletUserExecution()
         self.action()
         self.amendWin.destroy()
+
 
 if __name__ == "__main__":
     root = tk.Tk()
