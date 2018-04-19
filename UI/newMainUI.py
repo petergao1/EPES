@@ -4,6 +4,9 @@ from tkinter.ttk import *
 from tkinter import ttk
 import hrSystem
 import numpy as np
+import pandas as pd
+import csv
+import os
 
 
 class newMainUI():
@@ -461,7 +464,7 @@ class HRDepartmentUI:
     def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
         targetemployee = self.comboxlist.get()
-        if tmpcomment != "":
+        if targetemployee != "A":
             window1 = Tk()
             window1.title("Input successful")
             window1.geometry('500x500')
@@ -758,8 +761,8 @@ class hrsystemui:
         self.deleteWin = ""
         self.amendWin = ""
         self.namelist = tk.Label(self.frame, text="")
+        self.header = ['name', 'ID', 'department', 'title', 'job']
 
-        # lay the widgets out on the screen.
         self.name.pack(side="top", fill="x")
         self.entryname.pack(side="top", fill="x", padx=20)
         self.id.pack(side="top", fill="x")
@@ -775,35 +778,46 @@ class hrsystemui:
         self.deleteUser.pack(side="right")
         self.amend.pack(side="right")
         self.show.pack(side="left")
-
         self.frame.pack()
-
 
     def action(self):
         # get the value from the input widget, convert
         # it to an int, and do a calculation
-        if self.comboxlist.get()=="Staff":
-            self.flag=np.append(self.flag, [hrSystem.Staff(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(), self.entrytitle.get())])
-        if self.comboxlist.get()=="Department Manager":
-            self.flag=np.append(self.flag, [hrSystem.DepartmentManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(), self.entrytitle.get())])
-        if self.comboxlist.get()=="Senior Manager":
-            self.flag=np.append(self.flag, [hrSystem.SeniorManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(), self.entrytitle.get())])
-        self.result = self.result+"\n"+"\n"+self.flag[1].__str__()
-        self.list = np.append(self.list,self.flag[1])
-        self.output.configure(text=self.flag[1].__str__()+"\n has been saved")
-        self.flag = np.delete(self.flag,1)
+        if self.comboxlist.get() == "Staff":
+            self.flag = np.append(self.flag, [
+                hrSystem.Staff(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                               self.entrytitle.get())])
+        if self.comboxlist.get() == "Department Manager":
+            self.flag = np.append(self.flag, [
+                hrSystem.DepartmentManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                           self.entrytitle.get())])
+        if self.comboxlist.get() == "Senior Manager":
+            self.flag = np.append(self.flag, [
+                hrSystem.SeniorManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                       self.entrytitle.get())])
+        self.result = self.result + "\n" + "\n" + self.flag[1].__str__()
+        self.list = np.append(self.list, self.flag[1])
+        self.output.configure(text=self.flag[1].__str__() + "\n has been saved")
+        data = np.array([self.flag[1].get_name(), self.flag[1].get_number(), self.flag[1].get_department(),
+                         self.flag[1].get_title(), self.flag[1].get_job()])
+        df = pd.DataFrame([data])
+        if not os.path.isfile('namelist.csv'):
+            df.to_csv('namelist.csv', header=self.header, index=False)
+        else:
+            df.to_csv('namelist.csv', mode='a', header=False, index=False)
 
+        self.flag = np.delete(self.flag, 1)
 
     def showList(self):
         self.result = ""
         for i in range(self.list.size):
-            self.result = self.result + "\n"+"\n"+self.list[i].__str__()
+            self.result = self.result + "\n" + "\n" + self.list[i].__str__()
         from tkinter import scrolledtext
         win = tk.Toplevel()
         txt = scrolledtext.ScrolledText(win)
         win.title("Name List")
         win.geometry("240x225")
-        txt.insert(tk.INSERT,self.result)
+        txt.insert(tk.INSERT, self.result)
         txt.pack()
         win.mainloop()
 
@@ -812,7 +826,7 @@ class hrsystemui:
         self.deleteWin.title("Delete User")
         id = tk.Label(self.deleteWin, text="Enter an ID:", anchor="w")
         idEntry = tk.Entry(self.deleteWin)
-        deletebutton = tk.Button(self.deleteWin, text="delete user", command = self.deletUserExecution)
+        deletebutton = tk.Button(self.deleteWin, text="delete user", command=self.deletUserExecution)
         id.pack(side="top", fill="x")
         idEntry.pack(side="top", fill="x", padx=20)
         deletebutton.pack(side="bottom")
@@ -834,7 +848,7 @@ class hrsystemui:
         jobvalue = tk.StringVar()
         job = ttk.Combobox(self.amendWin, textvariable=jobvalue)
         job["values"] = ("Staff", "Department Manager", "Senior Manager")
-        executebutton = tk.Button(self.amendWin, text="Execution", command = self.amendation)
+        executebutton = tk.Button(self.amendWin, text="Execution", command=self.amendation)
         name.pack(side="top", fill="x")
         nameEntry.pack(side="top", fill="x", padx=20)
         department.pack(side="top", fill="x")
@@ -862,8 +876,10 @@ class hrsystemui:
                     self.deleteWin.destroy()
                 flag = i
         if flag != "":
-            self.list=np.delete(self.list,flag,axis=0)
-
+            df = pd.read_csv('namelist.csv', header=None)
+            df = df.drop(index=flag)
+            df.to_csv('namelist.csv', index=False, header=None)
+            self.list = np.delete(self.list, flag, axis=0)
 
     def amendation(self):
         self.deletUserExecution()
