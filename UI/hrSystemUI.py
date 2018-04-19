@@ -2,6 +2,9 @@ import tkinter as tk
 import hrSystem
 from  tkinter  import ttk
 import numpy as np
+import pandas as pd
+import csv
+import os
 
 class hrsystemui(tk.Frame):
 
@@ -39,6 +42,7 @@ class hrsystemui(tk.Frame):
         self.deleteWin=""
         self.amendWin=""
         self.namelist=tk.Label(self, text="")
+        self.header = ['name','ID','department','title','job']
 
         # lay the widgets out on the screen.
         self.name.pack(side="top", fill="x")
@@ -70,6 +74,13 @@ class hrsystemui(tk.Frame):
         self.result = self.result+"\n"+"\n"+self.flag[1].__str__()
         self.list = np.append(self.list,self.flag[1])
         self.output.configure(text=self.flag[1].__str__()+"\n has been saved")
+        data = np.array([self.flag[1].get_name(),self.flag[1].get_number(),self.flag[1].get_department(),self.flag[1].get_title(),self.flag[1].get_job()])
+        df = pd.DataFrame([data])
+        if not os.path.isfile('namelist.csv'):
+            df.to_csv('namelist.csv', header=self.header,index=False)
+        else:
+            df.to_csv('namelist.csv', mode='a',header=False,index=False)
+
         self.flag = np.delete(self.flag,1)
 
 
@@ -141,6 +152,9 @@ class hrsystemui(tk.Frame):
                     self.deleteWin.destroy()
                 flag = i
         if flag != "":
+            df = pd.read_csv('namelist.csv',header=None)
+            df = df.drop(index=flag)
+            df.to_csv('namelist.csv',index=False,header=None)
             self.list=np.delete(self.list,flag,axis=0)
 
 
