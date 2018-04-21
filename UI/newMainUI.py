@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import ttk
+import psycopg2
 import hrSystem
 import numpy as np
 import pandas as pd
@@ -10,14 +11,29 @@ import os
 
 
 class newMainUI():
-
     def __init__(self, master):
+	# database connection setup
+        # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print ("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor() 
+
+        cur.execute ("Select e.name, l.username from employee e, login_information l where l.employee_id = e.employee_id")
+        rows=cur.fetchall()
+        print ("\n Login Usernames:\n")
+        for row in rows:
+           print ("  ", row[0], ":", row[1])
+
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
         self.frame = tk.Frame(self.master)
         # username label and entry
         self.username = tk.Label(self.frame, text="Username", anchor="w")
+        
         self.entryun = tk.Entry(self.frame)
         # password label and entry
         self.password = tk.Label(self.frame, text="Password:", anchor="w")
@@ -35,26 +51,62 @@ class newMainUI():
         self.frame.pack()
 
     def login(self):
-        if self.entryun.get() == "staff":
-            self.newWindow = tk.Toplevel(self.master)
-            self.newWindow.title("Department Staff")
-            self.app = departmentStaffUI(self.newWindow)
-            root.withdraw()
-        elif self.entryun.get() == "manager":
-            self.newWindow = tk.Toplevel(self.master)
-            self.newWindow.title("Department Manager")
-            self.app = departmentManagerUI(self.newWindow)
-            root.withdraw()
-        elif self.entryun.get() == "HR":
+        # database connection setup
+        # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print ("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor() 
+        #get password and authenticate login
+        loginSql = ("select password, employee_id from login_information where username = %s")
+        loginValues = str(self.entryun.get())
+        cur.execute (loginSql, [loginValues])
+        rows=cur.fetchall()
+        print ("\n " + loginValues+ "'s password: ")
+        
+        for row in rows:
+           print ("   ", row[0])
+        userPass = row[0]
+        employeeId = row[1]
+        if(self.entrypw.get() == userPass):
+            print("Sucessful login")
+        else:
+            print("Login failed") 
+
+        # find role title to display UI
+        roleSql = ("select r.title from employee e, role r where e.employee_id = %s AND r.role_id = e.role")
+        roleValues = employeeId
+        cur.execute (roleSql, [roleValues])
+        rows=cur.fetchall()
+        print ("\n " + roleValues+ "'s title: ")        
+        for row in rows:
+           print ("   ", row[0])
+        employeeTitle = row[0]
+
+        
+        if "Human" in employeeTitle:
             self.newWindow = tk.Toplevel(self.master)
             self.newWindow.title("HR Department")
             self.app = HRDepartmentUI(self.newWindow)
             root.withdraw()
-        elif self.entryun.get() == "senior":
+        elif "Senior" in employeeTitle:
             self.newWindow = tk.Toplevel(self.master)
             self.newWindow.title("Senior Manager")
             self.app = SeniorManagerUI(self.newWindow)
             root.withdraw()
+        elif "Staff" in employeeTitle:
+            self.newWindow = tk.Toplevel(self.master)
+            self.newWindow.title("Department Staff")
+            self.app = departmentStaffUI(self.newWindow)
+            root.withdraw()
+        elif "Manager" in employeeTitle:
+            self.newWindow = tk.Toplevel(self.master)
+            self.newWindow.title("Department Manager")
+            self.app = departmentManagerUI(self.newWindow)
+            root.withdraw()
+       
 
     def close_window(self):
         root.withdraw()
