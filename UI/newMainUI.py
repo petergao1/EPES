@@ -11,29 +11,32 @@ import os
 
 
 class newMainUI():
+
     def __init__(self, master):
-	# database connection setup
+        # database connection setup
         # connect to database
         try:
             conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
         except:
-            print ("I am unable to connect to the database")
+            print("I am unable to connect to the database")
         # database cursor
-        cur = conn.cursor() 
+        cur = conn.cursor()
 
-        cur.execute ("Select e.name, l.username from employee e, login_information l where l.employee_id = e.employee_id")
-        rows=cur.fetchall()
-        print ("\n Login Usernames:\n")
+        cur.execute(
+            "Select e.name, l.username from employee e, login_information l where l.employee_id = e.employee_id")
+        rows = cur.fetchall()
+        print("\n Login Usernames:\n")
         for row in rows:
-           print ("  ", row[0], ":", row[1])
+            print("  ", row[0], ":", row[1])
 
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
+        self.username = username
+        self.password = password
         self.frame = tk.Frame(self.master)
         # username label and entry
         self.username = tk.Label(self.frame, text="Username", anchor="w")
-        
         self.entryun = tk.Entry(self.frame)
         # password label and entry
         self.password = tk.Label(self.frame, text="Password:", anchor="w")
@@ -41,6 +44,8 @@ class newMainUI():
         # login button
         self.login = tk.Button(self.frame, text="Login", command=self.login)
         self.quit = tk.Button(self.frame, text="Quit", command=self.close_window)
+        # new user button
+        self.newuser = tk.Button(self.frame, text="New user", command=self.new_user)
         # packing labels, entries and buttons
         self.username.pack(side="top", fill="x")
         self.entryun.pack(side="top", fill="x", padx=20)
@@ -48,6 +53,7 @@ class newMainUI():
         self.entrypw.pack(side="top", fill="x", padx=20)
         self.login.pack(side="right")
         self.quit.pack(side="left")
+        self.newuser.pack(side="middle")
         self.frame.pack()
 
     def login(self):
@@ -56,36 +62,35 @@ class newMainUI():
         try:
             conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
         except:
-            print ("I am unable to connect to the database")
+            print("I am unable to connect to the database")
         # database cursor
-        cur = conn.cursor() 
-        #get password and authenticate login
+        cur = conn.cursor()
+        # get password and authenticate login
         loginSql = ("select password, employee_id from login_information where username = %s")
         loginValues = str(self.entryun.get())
-        cur.execute (loginSql, [loginValues])
-        rows=cur.fetchall()
-        print ("\n " + loginValues+ "'s password: ")
-        
+        cur.execute(loginSql, [loginValues])
+        rows = cur.fetchall()
+        print("\n " + loginValues + "'s password: ")
+
         for row in rows:
-           print ("   ", row[0])
+            print("   ", row[0])
         userPass = row[0]
         employeeId = row[1]
-        if(self.entrypw.get() == userPass):
+        if (self.entrypw.get() == userPass):
             print("Sucessful login")
         else:
-            print("Login failed") 
+            print("Login failed")
 
-        # find role title to display UI
+            # find role title to display UI
         roleSql = ("select r.title from employee e, role r where e.employee_id = %s AND r.role_id = e.role")
         roleValues = employeeId
-        cur.execute (roleSql, [roleValues])
-        rows=cur.fetchall()
-        print ("\n " + roleValues+ "'s title: ")        
+        cur.execute(roleSql, [roleValues])
+        rows = cur.fetchall()
+        print("\n " + roleValues + "'s title: ")
         for row in rows:
-           print ("   ", row[0])
+            print("   ", row[0])
         employeeTitle = row[0]
 
-        
         if "Human" in employeeTitle:
             self.newWindow = tk.Toplevel(self.master)
             self.newWindow.title("HR Department")
@@ -106,7 +111,6 @@ class newMainUI():
             self.newWindow.title("Department Manager")
             self.app = departmentManagerUI(self.newWindow)
             root.withdraw()
-       
 
     def close_window(self):
         root.withdraw()
@@ -115,6 +119,36 @@ class newMainUI():
         self.newWindow = tk.Toplevel(self.master)
         self.newWindow.title("User Record")
         self.app = hrsystemui(self.newWindow)
+
+    def new_user(self):
+        window = Tk()
+        window.title("New User")
+        window.geometry('400x200')
+        ID_label = Label(window, text="Provide your ID:")
+        ID_entry = Entry(window)
+        create_un_label = Label(window, text="Create your username:")
+        create_pw_label = Label(window, text="Create your password:")
+        un_entry = Entry(window)
+        pw_entry = Entry(window)
+
+        def save():
+            if ID_entry.get() == "":  # Connect to database here, create new user allowed if ID exists
+                username = un_entry.get()
+                password = pw_entry.get()
+                print("Your username is: " + username)
+                print("Your password is: " + password)
+            else:
+                print("ID not recognized. New user not created")
+
+        save = Button(window, text="Save", command=save)
+        ID_label.grid(column=0, row=0)
+        ID_entry.grid(column=1, row=0)
+        create_un_label.grid(column=0, row=1)
+        create_pw_label.grid(column=0, row=2)
+        un_entry.grid(column=1, row=1)
+        pw_entry.grid(column=1, row=2)
+        save.grid(column=1, row=3)
+
 
 
 class departmentStaffUI:
@@ -134,7 +168,7 @@ class departmentStaffUI:
         self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist["values"] = ("A", "B", "C")
         self.comboxlist.current(0)
-        self.commententry = tk.Text(self.frame, width=40,height=10)
+        self.commententry = tk.Text(self.frame, width=40, height=10)
         self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
         # Respond
         self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
@@ -142,7 +176,7 @@ class departmentStaffUI:
         self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist_2["values"] = ("A", "B", "C")
         self.comboxlist_2.current(0)
-        self.respondentry = tk.Text(self.frame, width=40,height=10)
+        self.respondentry = tk.Text(self.frame, width=40, height=10)
         self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
         # View Payroll
         self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
@@ -261,6 +295,7 @@ class departmentStaffUI:
     def get_ratings(self):
         return ratings
 
+
 class departmentManagerUI:
     def __init__(self, master):
         # create a prompt, an input box, an output label,
@@ -275,7 +310,7 @@ class departmentManagerUI:
         self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist["values"] = ("A", "B", "C")
         self.comboxlist.current(0)
-        self.commententry = tk.Text(self.frame, width=40,height=10)
+        self.commententry = tk.Text(self.frame, width=40, height=10)
         self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
         # Respond
         self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
@@ -283,7 +318,7 @@ class departmentManagerUI:
         self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist_2["values"] = ("A", "B", "C")
         self.comboxlist_2.current(0)
-        self.respondentry = tk.Text(self.frame, width=40,height=10)
+        self.respondentry = tk.Text(self.frame, width=40, height=10)
         self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
         # View Payroll
         self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
@@ -423,9 +458,9 @@ class departmentManagerUI:
         window1.geometry('500x300')
         lbl1_1 = Label(window1, text="")
         lbl1_1.grid(column=0, row=0)
-        #if decision_exists:
+        # if decision_exists:
         #    lbl6_1.configure(text=decision)
-        #else:
+        # else:
         #    text = "No decision was made recently"
         #    lbl6_1.configure(text=text)
 
@@ -455,6 +490,7 @@ class departmentManagerUI:
     def get_ratings(self):
         return ratings
 
+
 class HRDepartmentUI:
     def __init__(self, master):
         # create a prompt, an input box, an output label,
@@ -469,7 +505,7 @@ class HRDepartmentUI:
         self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist["values"] = ("A", "B", "C")
         self.comboxlist.current(0)
-        self.commententry = tk.Text(self.frame, width=40,height=10)
+        self.commententry = tk.Text(self.frame, width=40, height=10)
         self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
         # Respond
         self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
@@ -477,7 +513,7 @@ class HRDepartmentUI:
         self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist_2["values"] = ("A", "B", "C")
         self.comboxlist_2.current(0)
-        self.respondentry = tk.Text(self.frame, width=40,height=10)
+        self.respondentry = tk.Text(self.frame, width=40, height=10)
         self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
         # View Payroll
         self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
@@ -604,6 +640,7 @@ class HRDepartmentUI:
     def get_ratings(self):
         return ratings
 
+
 class SeniorManagerUI:
     def __init__(self, master):
         # create a prompt, an input box, an output label,
@@ -618,7 +655,7 @@ class SeniorManagerUI:
         self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist["values"] = ("A", "B", "C")
         self.comboxlist.current(0)
-        self.commententry = tk.Text(self.frame, width=40,height=10)
+        self.commententry = tk.Text(self.frame, width=40, height=10)
         self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
         # Respond
         self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
@@ -626,7 +663,7 @@ class SeniorManagerUI:
         self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
         self.comboxlist_2["values"] = ("A", "B", "C")
         self.comboxlist_2.current(0)
-        self.respondentry = tk.Text(self.frame, width=40,height=10)
+        self.respondentry = tk.Text(self.frame, width=40, height=10)
         self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
         # View Payroll
         self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
@@ -638,7 +675,7 @@ class SeniorManagerUI:
         self.sethourslabel = tk.Label(self.frame, text="Set working hours:", anchor="w")
         self.hoursentry = tk.Entry(self.frame)
         self.sethours = tk.Button(self.frame, text="Set Hours", command=self.set_hours)
-        #Create decision
+        # Create decision
         self.createlabel = tk.Label(self.frame, text="Create decision:", anchor="w")
         self.createbutton = tk.Button(self.frame, text="Create decision", command=self.create_decision)
         # Logout
@@ -713,7 +750,7 @@ class SeniorManagerUI:
         lbl1_1.grid(column=0, row=0)
         lbl1_2 = Label(window1, text=" " + self.get_ratings())
         lbl1_2.grid(column=0, row=1)
-        
+
     def set_hours(self):
         global payroll
         workinghours = self.hoursentry.get()
@@ -757,7 +794,8 @@ class SeniorManagerUI:
         changes = Text(window, width=40, height=10)
 
         def button():
-            print(combo.get() + " decision to Employee: " + combo1.get() + "\nDecision detail:\n" + changes.get("1.0", "end-1c"))
+            print(combo.get() + " decision to Employee: " + combo1.get() + "\nDecision detail:\n" + changes.get("1.0",
+                                                                                                                "end-1c"))
 
         btn = Button(window, text="Click Me", command=button)
         label1.grid(column=0, row=0)
