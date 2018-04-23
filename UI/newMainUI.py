@@ -68,7 +68,7 @@ class newMainUI():
         # database cursor
         cur = conn.cursor()
         # get password and authenticate login
-        loginSql = ("select password, employee_id from login_information where username = %s")
+        loginSql = ("select l.password, l.employee_id, e.name from login_information l, employee e where l.employee_id = e.employee_id AND l.username = %s")
         loginValues = str(self.entryun.get())
         cur.execute(loginSql, [loginValues])
         rows = cur.fetchall()
@@ -77,8 +77,17 @@ class newMainUI():
             print("   ", row[0])
         userPass = row[0]
         self.employeeID = row[1]
+        userName = row[2]
         if (self.entrypw.get() == userPass):
             print("Sucessful login")
+            window1 = Tk()
+            window1.title("Login")
+            window1.geometry('200x75')
+            lbl1_1 = Label(window1, text="Login Successful")
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Welcome to EPES " + userName)
+            lbl1_2.grid(column=0, row=1)
+            
                 # find role title to display UI
             roleSql = ("select r.title from employee e, role r where e.employee_id = %s AND r.role_id = e.role")
             roleValues = self.employeeID
@@ -128,29 +137,266 @@ class newMainUI():
         window.geometry('400x200')
         ID_label = Label(window, text="Provide your ID:")
         ID_entry = Entry(window)
+        name_label = Label(window, text="Provide your name:")
+        name_entry = Entry(window)
         create_un_label = Label(window, text="Create your username:")
         create_pw_label = Label(window, text="Create your password:")
         un_entry = Entry(window)
         pw_entry = Entry(window)
 
         def save():
-            if ID_entry.get() == "":  # Connect to database here, create new user allowed if ID exists
-                username = un_entry.get()
-                password = pw_entry.get()
-                print("Your username is: " + username)
-                print("Your password is: " + password)
-            else:
+            # connect to database
+            try:
+                conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+            except:
+                print("I am unable to connect to the database")
+            # database cursor
+            cur = conn.cursor()
+            newID = ID_entry.get()
+            newName = name_entry.get()
+            username = un_entry.get()
+            password = pw_entry.get()
+                
+            
+                
+            try: # Connect to database here, create new user allowed if ID exists
+                newUserSql = ("insert into employee (employee_id, name, department, role) VALUES (%s, %s, %s, %s)")
+                newUserValues = [newID, newName, "TEMPDEPT", "TEMPROLE"]
+                cur.execute(newUserSql, newUserValues)
+                newUserLoginSql = ("insert into login_information (username, password, employee_id) VALUES (%s, %s, %s)")
+                newUserLoginValues = [username, password, newID]
+                cur.execute(newUserLoginSql, newUserLoginValues)
+                conn.commit()
+                conn.commit()
+            except:
                 print("ID not recognized. New user not created")
 
         save = Button(window, text="Save", command=save)
         ID_label.grid(column=0, row=0)
         ID_entry.grid(column=1, row=0)
-        create_un_label.grid(column=0, row=1)
-        create_pw_label.grid(column=0, row=2)
-        un_entry.grid(column=1, row=1)
-        pw_entry.grid(column=1, row=2)
-        save.grid(column=1, row=3)
+        name_label.grid(column=0, row=1)
+        name_entry.grid(column=1, row=1)
+        create_un_label.grid(column=0, row=2)
+        create_pw_label.grid(column=1, row=2)
+        un_entry.grid(column=0, row=3)
+        pw_entry.grid(column=1, row=3)
+        save.grid(column=1, row=4)
 
+class HRDepartmentUI:
+    def __init__(self, master, eid):
+        # create a prompt, an input box, an output label,
+        # and a button to do the computation
+        self.master = master
+        self.frame = tk.Frame(self.master)
+        self.payroll = 0
+        self.ratings = ""
+        # Database
+        self.employeeID = eid
+        # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get password and authenticate login
+        commentSql = ("select employee_id from employee")
+        cur.execute(commentSql)
+        rows = cur.fetchall()
+        self.employeeIDs = []
+        for row in rows:
+            self.employeeIDs.append(row[0])
+         
+        # Comment
+        self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
+        self.comvalue = tk.StringVar()
+        self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
+        self.comboxlist["values"] = (self.employeeIDs)
+        self.comboxlist.current(0)
+        self.commententry = tk.Text(self.frame, width=40, height=10)
+        self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
+        # Respond
+        self.respondlabel = tk.Label(self.frame, text="Write response:", anchor="w")
+        self.comvalue_2 = tk.StringVar()
+        self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
+        self.comboxlist_2["values"] = (self.employeeIDs)
+        self.comboxlist_2.current(0)
+        self.respondentry = tk.Text(self.frame, width=40, height=10)
+        self.sendrespond = tk.Button(self.frame, text="Send response", command=self.writerespond)
+        # View Payroll
+        self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
+        self.viewpayroll = tk.Button(self.frame, text="View Payroll", command=self.view_payroll)
+        # View Rating
+        self.ratingslabel = tk.Label(self.frame, text="Check ratings:", anchor="w")
+        self.viewratings = tk.Button(self.frame, text="View Ratings", command=self.view_ratings)
+        # Set Hours
+        self.sethourslabel = tk.Label(self.frame, text="Set working hours:", anchor="w")
+        self.hoursentry = tk.Entry(self.frame)
+        self.sethours = tk.Button(self.frame, text="Set Hours", command=self.set_hours)
+        self.execution = tk.Button(self.frame, text="Execute", command=self.execution)
+        # Logout
+        self.logoutButton = tk.Button(self.frame, text="Logout", command=self.logout)
+
+        self.commentlabel.grid(column=0, row=0)
+        self.comboxlist.grid(column=0, row=1)
+        self.commententry.grid(column=0, row=2)
+        self.sendcomment.grid(column=0, row=3)
+        self.respondlabel.grid(column=1, row=0)
+        self.comboxlist_2.grid(column=1, row=1)
+        self.respondentry.grid(column=1, row=2)
+        self.sendrespond.grid(column=1, row=3)
+        self.payrolllabel.grid(column=0, row=4)
+        self.viewpayroll.grid(column=1, row=4)
+        self.ratingslabel.grid(column=0, row=5)
+        self.viewratings.grid(column=1, row=5)
+        self.sethourslabel.grid(column=0, row=6)
+        self.hoursentry.grid(column=1, row=6)
+        self.sethours.grid(column=2, row=6)
+        self.execution.grid(column=0, row=7)
+        self.logoutButton.grid(column=0, row=8)
+
+        self.frame.pack()
+
+    def writecomment(self):
+        tmpcomment = self.commententry.get("1.0", "end-1c")
+        targetemployee = self.comboxlist.get()
+        if targetemployee != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            lbl1_1 = Label(window1, text="System received your comment to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
+            lbl1_2.grid(column=0, row=1)
+            # connect to database
+            try:
+                conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+            except:
+                print("I am unable to connect to the database")
+            # database cursor
+            cur = conn.cursor()
+            # get password and authenticate login
+            commentSql = ("insert into rating_report (rating_report_id, report, reportee, reporter) VALUES (%s, %s, %s, %s)")
+            import datetime
+            cur.execute(commentSql, [str(datetime.datetime.now.time())+targetemployee, tmpcomment, targetemployee, self.employeeID])
+            conn.commit()
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
+
+    def writerespond(self):
+        tmprespond = self.commententry.get("1.0", "end-1c")
+        targetemployee = self.comboxlist_2.get()
+        if tmprespond != "":
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('500x500')
+            # connect to database
+            try:
+                conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+            except:
+                print("I am unable to connect to the database")
+            # database cursor
+            cur = conn.cursor()
+            # get password and authenticate login
+            commentSql = ("insert into rating_report (rating_report_id, report, reportee, reporter) VALUES (%s, %s, %s, %s)")
+            import datetime
+            cur.execute(commentSql, [str(datetime.datetime.now.time())+targetemployee, tmprespond, targetemployee, self.employeeID])
+            conn.commit()
+            lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
+            lbl1_2.grid(column=0, row=1)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
+
+    def view_payroll(self):
+        # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get password and authenticate login
+        payrollSql = ("select s.wage, w.hours, s.bonus from work_day w, salary s where w.salary = s.salary_id AND w.employee_id = %s")
+        cur.execute(payrollSql, [self.employeeID])
+        rows = cur.fetchall()
+        for row in rows:
+            if(row[1] > 0):
+                payroll += row[0] * row[1] + row[2]
+            else:
+                payroll = row[0] + row[2]
+        self.payrolllabel.configure(text="Your payroll is: " + str(payroll))
+
+    def view_ratings(self):
+        global ratings
+        ratings = "test"
+        window1 = Tk()
+        window1.title("Check Ratings")
+        window1.geometry('400x100')
+        lbl1_1 = Label(window1, text="Your ratings:")
+        lbl1_1.grid(column=0, row=0)
+        
+        
+        # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get password and authenticate login
+        ratingSql = ("select rr.reporter, rr.report from rating_report rr where rr.reportee= %s")
+        cur.execute(ratingSql, [self.employeeID])
+        rows = cur.fetchall()
+        ratings = ""
+        for row in rows:
+            ratings += "\nFrom"+row[0] +": \t" +row[1]
+        
+        lbl1_2 = Label(window1, text=" " + ratings)
+        lbl1_2.grid(column=0, row=1)
+
+    def set_hours(self):
+        global payroll = 0;
+        workinghours = self.hoursentry.get()
+        if workinghours.replace('.', '', 1).isdigit():
+            window1 = Tk()
+            window1.title("Input successful")
+            window1.geometry('300x200')
+            lbl1_1 = Label(window1, text="System received your working hours.")
+            lbl1_1.grid(column=0, row=0)
+            lbl1_2 = Label(window1, text="Please wait for approval.")
+            lbl1_2.grid(column=0, row=1)
+            lbl1_2 = Label(window1, text="You have worked: " + workinghours + " hours today")
+            lbl1_2.grid(column=0, row=2)
+        elif workinghours == "":
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
+            lbl1_1.grid(column=0, row=0)
+        else:
+            window1 = Tk()
+            window1.title("ERROR MESSAGE")
+            window1.geometry('300x50')
+            lbl1_1 = Label(window1, text="Wrong input. Please type in only numbers.")
+            lbl1_1.grid(column=0, row=0)
+
+    def execution(self):
+        newMainUI.HRpage(self.master)
+        # need something
+
+    def logout(self):
+        root.deiconify()
+        self.master.destroy()
 
 
 class departmentStaffUI:
@@ -487,214 +733,6 @@ class departmentManagerUI:
         text = "Employee " + str(self.comboxlist_3.get()) + "'s working hour has been approved"
         lbl7 = Label(window, text=text)
         lbl7.grid(column=0, row=0)
-
-    def get_payroll(self):
-        return str(payroll)
-
-    def get_ratings(self):
-        return ratings
-
-
-class HRDepartmentUI:
-    def __init__(self, master, eid):
-        # create a prompt, an input box, an output label,
-        # and a button to do the computation
-        self.master = master
-        self.frame = tk.Frame(self.master)
-        self.payroll = 0
-        self.ratings = ""
-        # Database
-        self.employeeID = eid
-        # connect to database
-        try:
-            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
-        except:
-            print("I am unable to connect to the database")
-        # database cursor
-        cur = conn.cursor()
-        # get password and authenticate login
-        commentSql = ("select employee_id from employee")
-        cur.execute(commentSql)
-        rows = cur.fetchall()
-        self.employeeIDs = []
-        for row in rows:
-            self.employeeIDs.append(row[0])
-         
-        # Comment
-        self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
-        self.comvalue = tk.StringVar()
-        self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist["values"] = (self.employeeIDs)
-        self.comboxlist.current(0)
-        self.commententry = tk.Text(self.frame, width=40, height=10)
-        self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
-        # Respond
-        self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
-        self.comvalue_2 = tk.StringVar()
-        self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist_2["values"] = (self.employeeIDs)
-        self.comboxlist_2.current(0)
-        self.respondentry = tk.Text(self.frame, width=40, height=10)
-        self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
-        # View Payroll
-        self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
-        self.viewpayroll = tk.Button(self.frame, text="View Payroll", command=self.view_payroll)
-        # View Rating
-        self.ratingslabel = tk.Label(self.frame, text="Check ratings:", anchor="w")
-        self.viewratings = tk.Button(self.frame, text="View Ratings", command=self.view_ratings)
-        # Set Hours
-        self.sethourslabel = tk.Label(self.frame, text="Set working hours:", anchor="w")
-        self.hoursentry = tk.Entry(self.frame)
-        self.sethours = tk.Button(self.frame, text="Set Hours", command=self.set_hours)
-        self.execution = tk.Button(self.frame, text="Execute", command=self.execution)
-        # Logout
-        self.logoutButton = tk.Button(self.frame, text="Logout", command=self.logout)
-
-        self.commentlabel.grid(column=0, row=0)
-        self.comboxlist.grid(column=0, row=1)
-        self.commententry.grid(column=0, row=2)
-        self.sendcomment.grid(column=0, row=3)
-        self.respondlabel.grid(column=1, row=0)
-        self.comboxlist_2.grid(column=1, row=1)
-        self.respondentry.grid(column=1, row=2)
-        self.sendrespond.grid(column=1, row=3)
-        self.payrolllabel.grid(column=0, row=4)
-        self.viewpayroll.grid(column=1, row=4)
-        self.ratingslabel.grid(column=0, row=5)
-        self.viewratings.grid(column=1, row=5)
-        self.sethourslabel.grid(column=0, row=6)
-        self.hoursentry.grid(column=1, row=6)
-        self.sethours.grid(column=2, row=6)
-        self.execution.grid(column=0, row=7)
-        self.logoutButton.grid(column=0, row=8)
-
-        self.frame.pack()
-
-    def writecomment(self):
-        tmpcomment = self.commententry.get("1.0", "end-1c")
-        targetemployee = self.comboxlist.get()
-        if targetemployee != "":
-            window1 = Tk()
-            window1.title("Input successful")
-            window1.geometry('500x500')
-            lbl1_1 = Label(window1, text="System received your comment to employee " + targetemployee)
-            lbl1_1.grid(column=0, row=0)
-            lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
-            lbl1_2.grid(column=0, row=1)
-            # connect to database
-            try:
-                conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
-            except:
-                print("I am unable to connect to the database")
-            # database cursor
-            cur = conn.cursor()
-            # get password and authenticate login
-            commentSql = ("insert into rating_report (rating_report_id, report, reportee, reporter) VALUES (%s, %s, %s, %s)")
-            import datetime
-            cur.execute(commentSql, [str(datetime.datetime.now.time())+targetemployee, tmpcomment, targetemployee, self.employeeID])
-            conn.commit()
-        else:
-            window1 = Tk()
-            window1.title("ERROR MESSAGE")
-            window1.geometry('300x50')
-            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
-            lbl1_1.grid(column=0, row=0)
-
-    def writerespond(self):
-        tmprespond = self.commententry.get("1.0", "end-1c")
-        targetemployee = self.comboxlist_2.get()
-        if tmprespond != "":
-            window1 = Tk()
-            window1.title("Input successful")
-            window1.geometry('500x500')
-            # connect to database
-            try:
-                conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
-            except:
-                print("I am unable to connect to the database")
-            # database cursor
-            cur = conn.cursor()
-            # get password and authenticate login
-            commentSql = ("insert into rating_report (rating_report_id, report, reportee, reporter) VALUES (%s, %s, %s, %s)")
-            import datetime
-            cur.execute(commentSql, [str(datetime.datetime.now.time())+targetemployee, tmprespond, targetemployee, self.employeeID])
-            conn.commit()
-            lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
-            lbl1_1.grid(column=0, row=0)
-            lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
-            lbl1_2.grid(column=0, row=1)
-        else:
-            window1 = Tk()
-            window1.title("ERROR MESSAGE")
-            window1.geometry('300x50')
-            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
-            lbl1_1.grid(column=0, row=0)
-
-    def view_payroll(self):
-# connect to database
-        try:
-            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
-        except:
-            print("I am unable to connect to the database")
-        # database cursor
-        cur = conn.cursor()
-        # get password and authenticate login
-        payrollSql = ("select s.wage, w.hours, s.bonus from work_day w, salary s where w.salary = s.salary_id AND w.employee_id = %s")
-        cur.execute(payrollSql, [self.employeeID])
-        rows = cur.fetchall()
-        payroll = 0;
-        for row in rows:
-            if(row[1] > 0):
-                payroll += row[0] * row[1] + row[2]
-            else:
-                payroll = row[0] + row[2]
-        self.payrolllabel.configure(text="Your payroll is: " + str(payroll))
-
-    def view_ratings(self):
-        global ratings
-        ratings = "test"
-        window1 = Tk()
-        window1.title("Ratings Checking")
-        window1.geometry('300x50')
-        lbl1_1 = Label(window1, text="Your ratings:")
-        lbl1_1.grid(column=0, row=0)
-        lbl1_2 = Label(window1, text=" " + self.get_ratings())
-        lbl1_2.grid(column=0, row=1)
-
-    def set_hours(self):
-        global payroll
-        workinghours = self.hoursentry.get()
-        if workinghours.replace('.', '', 1).isdigit():
-            window1 = Tk()
-            window1.title("Input successful")
-            window1.geometry('300x200')
-            lbl1_1 = Label(window1, text="System received your working hours.")
-            lbl1_1.grid(column=0, row=0)
-            lbl1_2 = Label(window1, text="Please wait for approval.")
-            lbl1_2.grid(column=0, row=1)
-            lbl1_2 = Label(window1, text="Your working hours this month is: " + workinghours + " hours")
-            lbl1_2.grid(column=0, row=2)
-            payroll = float(workinghours) * 150
-        elif workinghours == "":
-            window1 = Tk()
-            window1.title("ERROR MESSAGE")
-            window1.geometry('300x50')
-            lbl1_1 = Label(window1, text="Wrong input. Input cannot be empty.")
-            lbl1_1.grid(column=0, row=0)
-        else:
-            window1 = Tk()
-            window1.title("ERROR MESSAGE")
-            window1.geometry('300x50')
-            lbl1_1 = Label(window1, text="Wrong input. Please type in only numbers.")
-            lbl1_1.grid(column=0, row=0)
-
-    def execution(self):
-        newMainUI.HRpage(self.master)
-        # need something
-
-    def logout(self):
-        root.deiconify()
-        self.master.destroy()
 
     def get_payroll(self):
         return str(payroll)
