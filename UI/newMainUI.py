@@ -32,8 +32,8 @@ class newMainUI():
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
-        self.username = username
-        self.password = password
+        self.username = ""
+        self.password = ""
         self.frame = tk.Frame(self.master)
         # username label and entry
         self.username = tk.Label(self.frame, text="Username", anchor="w")
@@ -53,7 +53,7 @@ class newMainUI():
         self.entrypw.pack(side="top", fill="x", padx=20)
         self.login.pack(side="right")
         self.quit.pack(side="left")
-        self.newuser.pack(side="middle")
+        self.newuser.pack(side="right")
         self.frame.pack()
 
     def login(self):
