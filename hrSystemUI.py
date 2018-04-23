@@ -63,31 +63,63 @@ class hrsystemui(tk.Frame):
 
 
     def action(self):
-        # get the value from the input widget, convert
-        # it to an int, and do a calculation
-        if self.comboxlist.get()=="Staff":
-            self.flag=np.append(self.flag, [hrSystem.Staff(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(), self.entrytitle.get())])
-        if self.comboxlist.get()=="Department Manager":
-            self.flag=np.append(self.flag, [hrSystem.DepartmentManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(), self.entrytitle.get())])
-        if self.comboxlist.get()=="Senior Manager":
-            self.flag=np.append(self.flag, [hrSystem.SeniorManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(), self.entrytitle.get())])
-        self.result = self.result+"\n"+"\n"+self.flag[1].__str__()
-        self.list = np.append(self.list,self.flag[1])
-        self.output.configure(text=self.flag[1].__str__()+"\n has been saved")
-        data = np.array([self.flag[1].get_name(),self.flag[1].get_number(),self.flag[1].get_department(),self.flag[1].get_title(),self.flag[1].get_job()])
-        df = pd.DataFrame([data])
         if not os.path.isfile('namelist.csv'):
-            df.to_csv('namelist.csv', header=self.header,index=False)
+            if self.comboxlist.get() == "Staff":
+                self.flag = np.append(self.flag, [
+                    hrSystem.Staff(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                   self.entrytitle.get())])
+            if self.comboxlist.get() == "Department Manager":
+                self.flag = np.append(self.flag, [
+                    hrSystem.DepartmentManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                               self.entrytitle.get())])
+            if self.comboxlist.get() == "Senior Manager":
+                self.flag = np.append(self.flag, [
+                    hrSystem.SeniorManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                           self.entrytitle.get())])
+            validated = True
         else:
-            df.to_csv('namelist.csv', mode='a',header=False,index=False)
-
-        self.flag = np.delete(self.flag,1)
+            userids = pd.read_csv('namelist.csv')['ID'].values
+            contains = False
+            validated = True
+            for i in range(len(userids)):
+                if userids[i]==self.entryid.get():
+                    contains = True
+                    validated = False
+            if not contains:
+                if self.comboxlist.get() == "Staff":
+                    self.flag = np.append(self.flag, [
+                        hrSystem.Staff(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                       self.entrytitle.get())])
+                if self.comboxlist.get() == "Department Manager":
+                    self.flag = np.append(self.flag, [
+                        hrSystem.DepartmentManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                                   self.entrytitle.get())])
+                if self.comboxlist.get() == "Senior Manager":
+                    self.flag = np.append(self.flag, [
+                        hrSystem.SeniorManager(self.entryname.get(), self.entryid.get(), self.entrydepartment.get(),
+                                               self.entrytitle.get())])
+        if validated:
+            self.result = self.result + "\n" + "\n" + self.flag[1].__str__()
+            self.list = np.append(self.list, self.flag[1])
+            self.output.configure(text=self.flag[1].__str__() + "\n has been saved")
+            data = np.array([self.flag[1].get_name(), self.flag[1].get_number(), self.flag[1].get_department(),
+                             self.flag[1].get_title(), self.flag[1].get_job()])
+            df = pd.DataFrame([data])
+            if not os.path.isfile('namelist.csv'):
+                df.to_csv('namelist.csv', header=self.header, index=False)
+            else:
+                df.to_csv('namelist.csv', mode='a', header=False, index=False)
+            self.flag = np.delete(self.flag, 1)
+        else:
+            self.output.configure(text="Duplicated ID, please try typing another ID")
 
 
     def showList(self):
         self.result = ""
-        for i in range(self.list.size):
-            self.result = self.result + "\n"+"\n"+self.list[i].__str__()
+        df = pd.read_csv('namelist.csv')
+        for i in range(len(df)):
+            for j in range(0,4):
+                self.result = self.result + "\n"+"\n" + str(df.iloc[i][j])
         from tkinter import scrolledtext
         win = tk.Toplevel()
         txt = scrolledtext.ScrolledText(win)
@@ -146,11 +178,13 @@ class hrsystemui(tk.Frame):
 
     def deletUserExecution(self):
         flag = ""
-        for i in range(1, self.list.size):
-            if self.list[i].get_number() == self.deleteid.get():
+        idlist = pd.read_csv('namelist.csv')['ID'].values
+        for i in range(0, len(idlist)):
+            if idlist[i] == self.deleteid.get():
                 if self.deleteWin != "":
                     self.deleteWin.destroy()
                 flag = i
+        print(flag)
         if flag != "":
             df = pd.read_csv('namelist.csv',header=None)
             df = df.drop(index=flag)
