@@ -55,7 +55,9 @@ class newMainUI():
         self.quit.pack(side="left")
         self.newuser.pack(side="right")
         self.frame.pack()
-
+        # database
+        self.employeeID = ""
+        
     def login(self):
         # database connection setup
         # connect to database
@@ -70,47 +72,47 @@ class newMainUI():
         loginValues = str(self.entryun.get())
         cur.execute(loginSql, [loginValues])
         rows = cur.fetchall()
-        print("\n " + loginValues + "'s password: ")
 
         for row in rows:
             print("   ", row[0])
         userPass = row[0]
-        employeeId = row[1]
+        self.employeeID = row[1]
         if (self.entrypw.get() == userPass):
             print("Sucessful login")
+                # find role title to display UI
+            roleSql = ("select r.title from employee e, role r where e.employee_id = %s AND r.role_id = e.role")
+            roleValues = self.employeeID
+            cur.execute(roleSql, [roleValues])
+            rows = cur.fetchall()
+            print("\n " + roleValues + "'s title: ")
+            for row in rows:
+                print("   ", row[0])
+            employeeTitle = row[0]
+            
+            if "Human" in employeeTitle:
+                self.newWindow = tk.Toplevel(self.master)
+                self.newWindow.title("HR Department")
+                self.app = HRDepartmentUI(self.newWindow, self.employeeID)
+                root.withdraw()
+            elif "Senior" in employeeTitle:
+                self.newWindow = tk.Toplevel(self.master)
+                self.newWindow.title("Senior Manager")
+                self.app = SeniorManagerUI(self.newWindow)
+                root.withdraw()
+            elif "Staff" in employeeTitle:
+                self.newWindow = tk.Toplevel(self.master)
+                self.newWindow.title("Department Staff")
+                self.app = departmentStaffUI(self.newWindow)
+                root.withdraw()
+            elif "Manager" in employeeTitle:
+                self.newWindow = tk.Toplevel(self.master)
+                self.newWindow.title("Department Manager")
+                self.app = departmentManagerUI(self.newWindow)
+                root.withdraw()
         else:
             print("Login failed")
 
-            # find role title to display UI
-        roleSql = ("select r.title from employee e, role r where e.employee_id = %s AND r.role_id = e.role")
-        roleValues = employeeId
-        cur.execute(roleSql, [roleValues])
-        rows = cur.fetchall()
-        print("\n " + roleValues + "'s title: ")
-        for row in rows:
-            print("   ", row[0])
-        employeeTitle = row[0]
-
-        if "Human" in employeeTitle:
-            self.newWindow = tk.Toplevel(self.master)
-            self.newWindow.title("HR Department")
-            self.app = HRDepartmentUI(self.newWindow)
-            root.withdraw()
-        elif "Senior" in employeeTitle:
-            self.newWindow = tk.Toplevel(self.master)
-            self.newWindow.title("Senior Manager")
-            self.app = SeniorManagerUI(self.newWindow)
-            root.withdraw()
-        elif "Staff" in employeeTitle:
-            self.newWindow = tk.Toplevel(self.master)
-            self.newWindow.title("Department Staff")
-            self.app = departmentStaffUI(self.newWindow)
-            root.withdraw()
-        elif "Manager" in employeeTitle:
-            self.newWindow = tk.Toplevel(self.master)
-            self.newWindow.title("Department Manager")
-            self.app = departmentManagerUI(self.newWindow)
-            root.withdraw()
+        
 
     def close_window(self):
         root.withdraw()
@@ -304,6 +306,8 @@ class departmentManagerUI:
         self.frame = tk.Frame(self.master)
         self.payroll = 0
         self.ratings = ""
+        # database
+        self.employeeId = ""
         # Comment
         self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
         self.comvalue = tk.StringVar()
@@ -492,18 +496,35 @@ class departmentManagerUI:
 
 
 class HRDepartmentUI:
-    def __init__(self, master):
+    def __init__(self, master, eid):
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
         self.frame = tk.Frame(self.master)
         self.payroll = 0
         self.ratings = ""
+        # Database
+        self.employeeID = eid
+        # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get password and authenticate login
+        commentSql = ("select employee_id from employee")
+        cur.execute(commentSql)
+        rows = cur.fetchall()
+        self.employeeIDs = []
+        for row in rows:
+            self.employeeIDs.append(row[0])
+         
         # Comment
         self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
         self.comvalue = tk.StringVar()
         self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist["values"] = ("A", "B", "C")
+        self.comboxlist["values"] = (self.employeeIDs)
         self.comboxlist.current(0)
         self.commententry = tk.Text(self.frame, width=40, height=10)
         self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
@@ -511,7 +532,7 @@ class HRDepartmentUI:
         self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
         self.comvalue_2 = tk.StringVar()
         self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist_2["values"] = ("A", "B", "C")
+        self.comboxlist_2["values"] = (self.employeeIDs)
         self.comboxlist_2.current(0)
         self.respondentry = tk.Text(self.frame, width=40, height=10)
         self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
@@ -552,7 +573,7 @@ class HRDepartmentUI:
     def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
         targetemployee = self.comboxlist.get()
-        if targetemployee != "A":
+        if targetemployee != "":
             window1 = Tk()
             window1.title("Input successful")
             window1.geometry('500x500')
@@ -560,6 +581,18 @@ class HRDepartmentUI:
             lbl1_1.grid(column=0, row=0)
             lbl1_2 = Label(window1, text="Your comment is: " + tmpcomment)
             lbl1_2.grid(column=0, row=1)
+            # connect to database
+            try:
+                conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+            except:
+                print("I am unable to connect to the database")
+            # database cursor
+            cur = conn.cursor()
+            # get password and authenticate login
+            commentSql = ("insert into rating_report (rating_report_id, report, reportee, reporter) VALUES (%s, %s, %s, %s)")
+            import datetime
+            cur.execute(commentSql, [str(datetime.datetime.now.time())+targetemployee, tmpcomment, targetemployee, self.employeeID])
+            conn.commit()
         else:
             window1 = Tk()
             window1.title("ERROR MESSAGE")
@@ -574,6 +607,18 @@ class HRDepartmentUI:
             window1 = Tk()
             window1.title("Input successful")
             window1.geometry('500x500')
+            # connect to database
+            try:
+                conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+            except:
+                print("I am unable to connect to the database")
+            # database cursor
+            cur = conn.cursor()
+            # get password and authenticate login
+            commentSql = ("insert into rating_report (rating_report_id, report, reportee, reporter) VALUES (%s, %s, %s, %s)")
+            import datetime
+            cur.execute(commentSql, [str(datetime.datetime.now.time())+targetemployee, tmprespond, targetemployee, self.employeeID])
+            conn.commit()
             lbl1_1 = Label(window1, text="System received your respond to employee " + targetemployee)
             lbl1_1.grid(column=0, row=0)
             lbl1_2 = Label(window1, text="Your respond is: " + tmprespond)
@@ -586,7 +631,24 @@ class HRDepartmentUI:
             lbl1_1.grid(column=0, row=0)
 
     def view_payroll(self):
-        self.payrolllabel.configure(text="Your payroll is: " + self.get_payroll())
+# connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get password and authenticate login
+        payrollSql = ("select s.wage, w.hours, s.bonus from work_day w, salary s where w.salary = s.salary_id AND w.employee_id = %s")
+        cur.execute(payrollSql, [self.employeeID])
+        rows = cur.fetchall()
+        payroll = 0;
+        for row in rows:
+            if(row[1] > 0):
+                payroll += row[0] * row[1] + row[2]
+            else:
+                payroll = row[0] + row[2]
+        self.payrolllabel.configure(text="Your payroll is: " + str(payroll))
 
     def view_ratings(self):
         global ratings
