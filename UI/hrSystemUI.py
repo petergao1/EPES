@@ -43,6 +43,11 @@ class hrsystemui(tk.Frame):
         self.amendWin=""
         self.namelist=tk.Label(self, text="")
         self.header = ['name','ID','department','title','job']
+        self.aname = ""
+        self.aid = ""
+        self.adepartment = ""
+        self.atitle = ""
+        self.acomboxlist =""
 
         # lay the widgets out on the screen.
         self.name.pack(side="top", fill="x")
@@ -63,6 +68,7 @@ class hrsystemui(tk.Frame):
 
 
     def action(self):
+        usrid = self.entryid.get()
         if not os.path.isfile('namelist.csv'):
             if self.comboxlist.get() == "Staff":
                 self.flag = np.append(self.flag, [
@@ -82,7 +88,7 @@ class hrsystemui(tk.Frame):
             contains = False
             validated = True
             for i in range(len(userids)):
-                if userids[i]==self.entryid.get():
+                if userids[i]==usrid:
                     contains = True
                     validated = False
             if not contains:
@@ -168,23 +174,24 @@ class hrsystemui(tk.Frame):
         newJob.pack(side="top", fill="x")
         job.pack(side="top", fill="x", padx=20)
         executebutton.pack(side="bottom")
-        self.entryname = nameEntry
-        self.entryid = idEntry
+        self.aname = nameEntry
+        self.aid = idEntry
         self.deleteid = idEntry
-        self.entrydepartment = departmentEntry
-        self.entrytitle = titleEntry
-        self.comboxlist = job
+        self.adepartment = departmentEntry
+        self.atitle = titleEntry
+        self.acomboxlist = job
         self.amendWin.mainloop()
 
     def deletUserExecution(self):
         flag = ""
         idlist = pd.read_csv('namelist.csv')['ID'].values
-        for i in range(0, len(idlist)):
-            if idlist[i] == self.deleteid.get():
+        deletid = self.deleteid.get()
+        for i in range(0, len(idlist)-1):
+            print(idlist[i])
+            if idlist[i] == deletid:
                 if self.deleteWin != "":
                     self.deleteWin.destroy()
-                flag = i
-        print(flag)
+                flag = i+1
         if flag != "":
             df = pd.read_csv('namelist.csv',header=None)
             df = df.drop(index=flag)
@@ -194,7 +201,56 @@ class hrsystemui(tk.Frame):
 
     def amendation(self):
         self.deletUserExecution()
-        self.action()
+        usrid = self.entryid.get()
+        if not os.path.isfile('namelist.csv'):
+            if self.acomboxlist.get() == "Staff":
+                self.flag = np.append(self.flag, [
+                    hrSystem.Staff(self.aname.get(), self.aid.get(), self.adepartment.get(),
+                                   self.atitle.get())])
+            if self.acomboxlist.get() == "Department Manager":
+                self.flag = np.append(self.flag, [
+                    hrSystem.DepartmentManager(self.aname.get(), self.aid.get(), self.adepartment.get(),
+                                               self.atitle.get())])
+            if self.acomboxlist.get() == "Senior Manager":
+                self.flag = np.append(self.flag, [
+                    hrSystem.SeniorManager(self.aname.get(), self.aid.get(), self.adepartment.get(),
+                                           self.atitle.get())])
+            validated = True
+        else:
+            userids = pd.read_csv('namelist.csv')['ID'].values
+            contains = False
+            validated = True
+            for i in range(len(userids)):
+                if userids[i] == usrid:
+                    contains = True
+                    validated = False
+            if not contains:
+                if self.acomboxlist.get() == "Staff":
+                    self.flag = np.append(self.flag, [
+                        hrSystem.Staff(self.aname.get(), self.aid.get(), self.adepartment.get(),
+                                       self.atitle.get())])
+                if self.acomboxlist.get() == "Department Manager":
+                    self.flag = np.append(self.flag, [
+                        hrSystem.DepartmentManager(self.aname.get(), self.aid.get(), self.adepartment.get(),
+                                                   self.atitle.get())])
+                if self.acomboxlist.get() == "Senior Manager":
+                    self.flag = np.append(self.flag, [
+                        hrSystem.SeniorManager(self.aname.get(), self.aid.get(), self.adepartment.get(),
+                                               self.atitle.get())])
+        if validated:
+            self.result = self.result + "\n" + "\n" + self.flag[1].__str__()
+            self.list = np.append(self.list, self.flag[1])
+            self.output.configure(text=self.flag[1].__str__() + "\n has been saved")
+            data = np.array([self.flag[1].get_name(), self.flag[1].get_number(), self.flag[1].get_department(),
+                             self.flag[1].get_title(), self.flag[1].get_job()])
+            df = pd.DataFrame([data])
+            if not os.path.isfile('namelist.csv'):
+                df.to_csv('namelist.csv', header=self.header, index=False)
+            else:
+                df.to_csv('namelist.csv', mode='a', header=False, index=False)
+            self.flag = np.delete(self.flag, 1)
+        else:
+            self.output.configure(text="Duplicated ID, please try typing another ID")
         self.amendWin.destroy()
 
 
