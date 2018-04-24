@@ -126,10 +126,10 @@ class newMainUI():
     def close_window(self):
         root.withdraw()
 
-    def HRpage(self):
+    def HRpage(self, eid):
         self.newWindow = tk.Toplevel(self.master)
         self.newWindow.title("User Record")
-        self.app = hrsystemui(self.newWindow)
+        self.app = hrsystemui(self.newWindow, eid)
 
     def new_user(self):
         window = Tk()
@@ -166,8 +166,18 @@ class newMainUI():
                 newUserLoginValues = [username, password, newID]
                 cur.execute(newUserLoginSql, newUserLoginValues)
                 conn.commit()
+                
+                window1 = Tk()
+                window1.title("New User Added")
+                window1.geometry('200x50')
+                lbl1_1 = Label(window1, text="User: "+newID+" added")
+                lbl1_1.grid(column=0, row=0)
             except:
-                print("ID already in use. New user not created")
+                window1 = Tk()
+                window1.title("User Failure")
+                window1.geometry('200x50')
+                lbl1_1 = Label(window1, text="New user not created")
+                lbl1_1.grid(column=0, row=0)
 
         save = Button(window, text="Save", command=save)
         ID_label.grid(column=0, row=0)
@@ -231,7 +241,7 @@ class HRDepartmentUI:
         self.sethourslabel = tk.Label(self.frame, text="Set working hours:", anchor="w")
         self.hoursentry = tk.Entry(self.frame)
         self.sethours = tk.Button(self.frame, text="Set Hours", command=self.set_hours)
-        self.execution = tk.Button(self.frame, text="Execute", command=self.execution)
+        self.execution = tk.Button(self.frame, text="Read Decision", command=self.execution)
         # Logout
         self.logoutButton = tk.Button(self.frame, text="Logout", command=self.logout)
 
@@ -425,7 +435,7 @@ class HRDepartmentUI:
             lbl1_1.grid(column=0, row=0)
 
     def execution(self):
-        newMainUI.HRpage(self.master)
+        newMainUI.HRpage(self.master, self.employeeID)
         # need something
 
     def logout(self):
@@ -982,8 +992,8 @@ class departmentManagerUI:
         
         window1 = Tk()
         window1.title("Senior manager's Decision")
-        window1.geometry('500x300')
-        lbl1_1 = Label(window1, text="Send decision to sf1")
+        window1.geometry('150x75')
+        lbl1_1 = Label(window1, text="Sent decision to sf1")
         lbl1_1.grid(column=0, row=0)
 
     def approve_hours(self):
@@ -1281,7 +1291,7 @@ class SeniorManagerUI:
             try:                
                 toEmployee = combo1.get()
                 decisionID = combo.get()+toEmployee
-                decisionText = combo.get()+":"+toEmployee +":"+ str(changes.get("1.0", "end-1c"))
+                decisionText = combo.get()+": "+toEmployee +":\t"+ str(changes.get("1.0", "end-1c"))
                 createDecisionSql = ("insert into decision (senior_manager, dept_manager, decision, decision_id) VALUES(%s, %s, %s, %s)")
                 cur.execute(createDecisionSql, [self.employeeID, "ed", decisionText, decisionID])
                 conn.commit()
@@ -1319,11 +1329,12 @@ class SeniorManagerUI:
 
 class hrsystemui:
 
-    def __init__(self, master):
+    def __init__(self, master, eid):
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
         self.frame = tk.Frame(self.master)
+        self.employeeID = eid
         self.name = tk.Label(self.frame, text="Enter a name:", anchor="w")
         self.entryname = tk.Entry(self.frame)
         self.id = tk.Label(self.frame, text="Enter a ID:", anchor="w")
@@ -1400,13 +1411,27 @@ class hrsystemui:
 
     def showList(self):
         self.result = ""
-        for i in range(self.list.size):
-            self.result = self.result + "\n" + "\n" + self.list[i].__str__()
+         # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get employee ids from database to populate dropdown 
+        getDecisionSql= ("select senior_manager, decision from decision where hr_staff = %s")
+        cur.execute(getDecisionSql, [self.employeeID])
+        rows = cur.fetchall()
+        for row in rows:
+            self.result += "\nSenior Manager:"+row[0]+"\n\t"+row[1]
+            
+        #for i in range(self.list.size):
+         #   self.result = self.result + "\n" + "\n" + self.list[i].__str__()
         from tkinter import scrolledtext
         win = tk.Toplevel()
         txt = scrolledtext.ScrolledText(win)
         win.title("Name List")
-        win.geometry("240x225")
+        win.geometry("450x225")
         txt.insert(tk.INSERT, self.result)
         txt.pack()
         win.mainloop()
@@ -1416,7 +1441,35 @@ class hrsystemui:
         self.deleteWin.title("Delete User")
         id = tk.Label(self.deleteWin, text="Enter an ID:", anchor="w")
         idEntry = tk.Entry(self.deleteWin)
-        deletebutton = tk.Button(self.deleteWin, text="delete user", command=self.deletUserExecution)
+        
+        def deleteButton():
+            try:               
+                try:
+                    conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+                except:
+                    print("I am unable to connect to the database")
+                # database cursor
+                cur = conn.cursor() 
+                deleteLoginSql = ("delete from login_information where employee_id = %s")
+                cur.execute(deleteLoginSql, [idEntry.get()])   
+                deleteEmployeeSql = ("delete from employee where employee_id = %s")
+                cur.execute(deleteEmployeeSql, [idEntry.get()])        
+                conn.commit()
+                
+                window1 = Tk()
+                window1.title("Deletion Success")
+                window1.geometry('200x50')
+                lbl1_1 = Label(window1, text="Deleted  "+idEntry.get())
+                lbl1_1.grid(column=0, row=0)
+                
+            except:
+                window1 = Tk()
+                window1.title("ERROR MESSAGE")
+                window1.geometry('300x50')
+                lbl1_1 = Label(window1, text="User cannot be found")
+                lbl1_1.grid(column=0, row=0)
+        
+        deletebutton = tk.Button(self.deleteWin, text="delete user", command=deleteButton)
         id.pack(side="top", fill="x")
         idEntry.pack(side="top", fill="x", padx=20)
         deletebutton.pack(side="bottom")
@@ -1432,21 +1485,68 @@ class hrsystemui:
         departmentEntry = tk.Entry(self.amendWin)
         id = tk.Label(self.amendWin, text="Enter the ID:", anchor="w")
         idEntry = tk.Entry(self.amendWin)
-        title = tk.Label(self.amendWin, text="Enter the new title:", anchor="w")
-        titleEntry = tk.Entry(self.amendWin)
+        #title = tk.Label(self.amendWin, text="Enter the new title:", anchor="w")
+        #titleEntry = tk.Entry(self.amendWin)
         newJob = tk.Label(self.amendWin, text="Enter the new job:", anchor="w")
         jobvalue = tk.StringVar()
         job = ttk.Combobox(self.amendWin, textvariable=jobvalue)
         job["values"] = ("Staff", "Department Manager", "Senior Manager")
-        executebutton = tk.Button(self.amendWin, text="Execution", command=self.amendation)
+        def executionButton():
+            try:               
+                try:
+                    conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+                except:
+                    print("I am unable to connect to the database")
+                # database cursor
+                cur = conn.cursor() 
+                findRoleSql = ("select role_id, is_manager from role where title = %s")
+                cur.execute(findRoleSql, [job.get()])
+                rows = cur.fetchall()
+                role_id = ""
+                salary = "Staff1"
+                isManager = 'FALSE'
+                for row in rows:
+                    role_id = row[0]
+                    isManager = row[1]
+                    
+                if isManager: 
+                    salary = "Manager1"
+                    
+                    
+                updateUserSql = ""
+                updateUserSqlValues = []
+                if departmentEntry is None:
+                    updateUserSql = ("update employee set role = %s, salary = %s where employee_id = %s")
+                    updateUserSqlValues = [role_id, salary, idEntry.get()]
+                else:
+                    updateUserSql = ("update employee set role = %s, department = %s, salary = %s where employee_id = %s")
+                    updateUserSqlValues = [role_id, departmentEntry.get(), salary, idEntry.get()]
+                
+                cur.execute(updateUserSql, updateUserSqlValues)                
+                conn.commit()
+                
+                window1 = Tk()
+                window1.title("Execution Success")
+                window1.geometry('200x50')
+                lbl1_1 = Label(window1, text="Executed decision for "+nameEntry.get())
+                lbl1_1.grid(column=0, row=0)
+            except:
+                window1 = Tk()
+                window1.title("ERROR MESSAGE")
+                window1.geometry('300x50')
+                lbl1_1 = Label(window1, text="Incorrect inputs or already executed")
+                lbl1_1.grid(column=0, row=0)
+        
+        executebutton = tk.Button(self.amendWin, text="Execute", command=executionButton)
+        #btn = Button(window, text="Create", command=button)
         name.pack(side="top", fill="x")
         nameEntry.pack(side="top", fill="x", padx=20)
         department.pack(side="top", fill="x")
         departmentEntry.pack(side="top", fill="x", padx=20)
         id.pack(side="top", fill="x")
         idEntry.pack(side="top", fill="x", padx=20)
-        title.pack(side="top", fill="x")
-        titleEntry.pack(side="top", fill="x", padx=20)
+        #title.pack(side="top", fill="x")
+        #titleEntry.pack(side="top", fill="x", padx=20)
         newJob.pack(side="top", fill="x")
         job.pack(side="top", fill="x", padx=20)
         executebutton.pack(side="bottom")
@@ -1454,27 +1554,9 @@ class hrsystemui:
         self.entryid = idEntry
         self.deleteid = idEntry
         self.entrydepartment = departmentEntry
-        self.entrytitle = titleEntry
+        #self.entrytitle = titleEntry
         self.comboxlist = job
         self.amendWin.mainloop()
-
-    def deletUserExecution(self):
-        flag = ""
-        for i in range(1, self.list.size):
-            if self.list[i].get_number() == self.deleteid.get():
-                if self.deleteWin != "":
-                    self.deleteWin.destroy()
-                flag = i
-        if flag != "":
-            df = pd.read_csv('namelist.csv', header=None)
-            df = df.drop(index=flag)
-            df.to_csv('namelist.csv', index=False, header=None)
-            self.list = np.delete(self.list, flag, axis=0)
-
-    def amendation(self):
-        self.deletUserExecution()
-        self.action()
-        self.amendWin.destroy()
 
 
 if __name__ == "__main__":
