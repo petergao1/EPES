@@ -75,7 +75,7 @@ class newMainUI():
 
         for row in rows:
             print("   ", row[0])
-        userPass = row[0]
+            userPass = row[0]
         self.employeeID = row[1]
         userName = row[2]
         if (self.entrypw.get() == userPass):
@@ -106,17 +106,17 @@ class newMainUI():
             elif "Senior" in employeeTitle:
                 self.newWindow = tk.Toplevel(self.master)
                 self.newWindow.title("Senior Manager")
-                self.app = SeniorManagerUI(self.newWindow)
+                self.app = SeniorManagerUI(self.newWindow, self.employeeID)
                 root.withdraw()
             elif "Staff" in employeeTitle:
                 self.newWindow = tk.Toplevel(self.master)
                 self.newWindow.title("Department Staff")
-                self.app = departmentStaffUI(self.newWindow)
+                self.app = departmentStaffUI(self.newWindow, self.employeeID)
                 root.withdraw()
             elif "Manager" in employeeTitle:
                 self.newWindow = tk.Toplevel(self.master)
                 self.newWindow.title("Department Manager")
-                self.app = departmentManagerUI(self.newWindow)
+                self.app = departmentManagerUI(self.newWindow, self.employeeID)
                 root.withdraw()
         else:
             print("Login failed")
@@ -155,21 +155,19 @@ class newMainUI():
             newID = ID_entry.get()
             newName = name_entry.get()
             username = un_entry.get()
-            password = pw_entry.get()
-                
-            
+            password = pw_entry.get()    
                 
             try: # Connect to database here, create new user allowed if ID exists
-                newUserSql = ("insert into employee (employee_id, name, department, role, salary) VALUES (%s, %s, %s, %s)")
+                newUserSql = ("insert into employee (employee_id, name, department, role, salary) VALUES (%s, %s, %s, %s, %s)")
                 newUserValues = [newID, newName, "TEMPDEPT", "TEMPROLE", "TEMPSALARY"]
                 cur.execute(newUserSql, newUserValues)
+                conn.commit()
                 newUserLoginSql = ("insert into login_information (username, password, employee_id) VALUES (%s, %s, %s)")
                 newUserLoginValues = [username, password, newID]
                 cur.execute(newUserLoginSql, newUserLoginValues)
                 conn.commit()
-                conn.commit()
             except:
-                print("ID not recognized. New user not created")
+                print("ID already in use. New user not created")
 
         save = Button(window, text="Save", command=save)
         ID_label.grid(column=0, row=0)
@@ -359,16 +357,25 @@ class HRDepartmentUI:
         # database cursor
         cur = conn.cursor()
         # get password and authenticate login
-        ratingSql = ("select rr.reporter, rr.report, rc.comment from rating_report rr, rating_comment rc where rc.rating_report_id = rr.rating_report_id AND rr.reportee= %s")
+        
+        ratingSql = ("select rr.reporter, rr.report, rr.rating_report_id from rating_report rr where rr.reportee= %s")
         cur.execute(ratingSql, [self.employeeID])
         rows = cur.fetchall()
         ratings = ""
         for row in rows:
-            print( len(row))
-            if(len(row) > 2):
-                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + row[2]
-            else:
+            try:
+                commentSql = ("select comment from rating_comment where rating_report_id = %s")
+                cur2=conn.cursor()
+                cur2.execute(commentSql, [row[2]])
+                comments = cur2.fetchall()
+                comment = ""
+                for com in comments:
+                    comment = com[0]
+                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + comment
+            except:
                 ratings += "\nFrom "+row[0] +": \t" +row[1]
+            
+                
         lbl1_2 = Label(window1, text=" " + ratings)
         lbl1_2.grid(column=0, row=1)
 
@@ -603,19 +610,27 @@ class departmentStaffUI:
         # database cursor
         cur = conn.cursor()
         # get password and authenticate login
-        ratingSql = ("select rr.reporter, rr.report, rc.comment from rating_report rr, rating_comment rc where rc.rating_report_id = rr.rating_report_id AND rr.reportee= %s")
+        
+        ratingSql = ("select rr.reporter, rr.report, rr.rating_report_id from rating_report rr where rr.reportee= %s")
         cur.execute(ratingSql, [self.employeeID])
         rows = cur.fetchall()
         ratings = ""
         for row in rows:
-            print( len(row))
-            if(len(row) > 2):
-                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + row[2]
-            else:
+            try:
+                commentSql = ("select comment from rating_comment where rating_report_id = %s")
+                cur2=conn.cursor()
+                cur2.execute(commentSql, [row[2]])
+                comments = cur2.fetchall()
+                comment = ""
+                for com in comments:
+                    comment = com[0]
+                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + comment
+            except:
                 ratings += "\nFrom "+row[0] +": \t" +row[1]
+            
+                
         lbl1_2 = Label(window1, text=" " + ratings)
         lbl1_2.grid(column=0, row=1)
-
     def set_hours(self):
         workinghours = self.hoursentry.get()
         if workinghours.replace('.', '', 1).isdigit():
@@ -667,7 +682,7 @@ class departmentStaffUI:
 
 
 class departmentManagerUI:
-   def __init__(self, master, eid):
+    def __init__(self, master, eid):
         # create a prompt, an input box, an output label,
         # and a button to do the computation
         self.master = master
@@ -694,18 +709,18 @@ class departmentManagerUI:
         self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
         self.comvalue = tk.StringVar()
         self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist["values"] = ("A", "B", "C")
+        self.comboxlist["values"] = (self.employeeIDs)
         self.comboxlist.current(0)
         self.commententry = tk.Text(self.frame, width=40, height=10)
         self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
         # Respond
-        self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
+        self.respondlabel = tk.Label(self.frame, text="Write response:", anchor="w")
         self.comvalue_2 = tk.StringVar()
         self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist_2["values"] = ("A", "B", "C")
+        self.comboxlist_2["values"] = (self.employeeIDs)
         self.comboxlist_2.current(0)
         self.respondentry = tk.Text(self.frame, width=40, height=10)
-        self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
+        self.sendrespond = tk.Button(self.frame, text="Send response", command=self.writerespond)
         # View Payroll
         self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
         self.viewpayroll = tk.Button(self.frame, text="View Payroll", command=self.view_payroll)
@@ -719,14 +734,15 @@ class departmentManagerUI:
         # Read Decision
         self.readlabel = tk.Label(self.frame, text="Read senior manager's decision:", anchor="w")
         self.readbutton = tk.Button(self.frame, text="Read Decision", command=self.read_decision)
+        self.decisionID = ""
         # Send Decision
         self.sendlabel = tk.Label(self.frame, text="Send decision to HR:", anchor="w")
-        self.sendbutton = tk.Button(self.frame, text="Read Decision", command=self.send_decision)
+        self.sendbutton = tk.Button(self.frame, text="Send Decision", command=self.send_decision)
         # Approve Hours
         self.approvelabel = tk.Label(self.frame, text="Approve working hours:", anchor="w")
         self.comvalue_3 = tk.StringVar()
         self.comboxlist_3 = ttk.Combobox(self.frame, textvariable=self.comvalue_3)
-        self.comboxlist_3["values"] = ("A", "B", "C")
+        self.comboxlist_3["values"] = (self.employeeIDs)
         self.comboxlist_3.current(0)
         self.approvehours = tk.Button(self.frame, text="Approve Hours", command=self.approve_hours)
         # Logout
@@ -757,7 +773,7 @@ class departmentManagerUI:
         self.logoutButton.grid(column=0, row=9)
         self.frame.pack()
 
-   def writecomment(self):
+    def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
         targetemployee = self.comboxlist.get()
         if targetemployee != "":
@@ -859,19 +875,28 @@ class departmentManagerUI:
         # database cursor
         cur = conn.cursor()
         # get password and authenticate login
-        ratingSql = ("select rr.reporter, rr.report, rc.comment from rating_report rr, rating_comment rc where rc.rating_report_id = rr.rating_report_id AND rr.reportee= %s")
+        
+        ratingSql = ("select rr.reporter, rr.report, rr.rating_report_id from rating_report rr where rr.reportee= %s")
         cur.execute(ratingSql, [self.employeeID])
         rows = cur.fetchall()
         ratings = ""
         for row in rows:
-            print( len(row))
-            if(len(row) > 2):
-                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + row[2]
-            else:
+            try:
+                commentSql = ("select comment from rating_comment where rating_report_id = %s")
+                cur2=conn.cursor()
+                cur2.execute(commentSql, [row[2]])
+                comments = cur2.fetchall()
+                comment = ""
+                for com in comments:
+                    comment = com[0]
+                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + comment
+            except:
                 ratings += "\nFrom "+row[0] +": \t" +row[1]
+            
+                
         lbl1_2 = Label(window1, text=" " + ratings)
         lbl1_2.grid(column=0, row=1)
-
+        
     def set_hours(self):
         workinghours = self.hoursentry.get()
         if workinghours.replace('.', '', 1).isdigit():
@@ -882,8 +907,7 @@ class departmentManagerUI:
                 print("I am unable to connect to the database")
             # database cursor
             cur = conn.cursor()
-            # get password and authenticate login
-            #getSalarySql = ("select wage
+            # insert hours into database
             insertHoursSql = ("insert into work_day (day, employee_id, hours) VALUES (%s, %s, %s)")
             import time
             try:
@@ -922,34 +946,63 @@ class departmentManagerUI:
         self.master.destroy()
 
     def read_decision(self):
+        try:
+             conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+            # database cursor
+        cur = conn.cursor()
+        # insert hours into database
+        getDecisionSql = ("select senior_manager, decision, decision_id from decision where decision.dept_manager = %s") 
+        cur.execute(getDecisionSql, [self.employeeID])
+        decisions = cur.fetchall()
+        decisiontext = ""
+        for dec in decisions:
+            decisiontext += "\n Senior Manager: "+dec[0] + ":\n\tDecision:" +dec[1]
+        
+        self.decisionID = dec[2]     
         window1 = Tk()
         window1.title("Senior manager's Decision")
         window1.geometry('500x300')
-        lbl1_1 = Label(window1, text="")
+        lbl1_1 = Label(window1, text=decisiontext)
         lbl1_1.grid(column=0, row=0)
-        # if decision_exists:
-        #    lbl6_1.configure(text=decision)
-        # else:
-        #    text = "No decision was made recently"
-        #    lbl6_1.configure(text=text)
+        
 
     def send_decision(self):
+        try:
+             conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+            # database cursor
+        cur = conn.cursor()
+        # insert hours into database
+        sendDecisionSql = ("update decision set hr_staff = %s where decision_id = %s")
+        cur.execute(sendDecisionSql, ["sf1", self.decisionID])
+        conn.commit()
+        
         window1 = Tk()
-        window1.title("Decision")
+        window1.title("Senior manager's Decision")
         window1.geometry('500x300')
-        lbl1_1 = Label(window1, text="")
+        lbl1_1 = Label(window1, text="Send decision to sf1")
         lbl1_1.grid(column=0, row=0)
-        # if decision_exists:
-        #    lbl6_1.configure(text=decision)
-        # else:
-        #    text = "No decision was made recently"
-        #    lbl6_1.configure(text=text)
 
     def approve_hours(self):
+    # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get work days and approve them
+        workingEmployee = str(self.comboxlist_3.get())
+        approveSql = ("update work_day set approved = 'TRUE' where employee_id = %s")
+        cur.execute(approveSql, [workingEmployee])
+        conn.commit()
         window = Tk()
         window.title("Approval")
         window.geometry('500x300')
-        text = "Employee " + str(self.comboxlist_3.get()) + "'s working hour has been approved"
+        text = "Employee " + workingEmployee+ "'s working hour has been approved"
         lbl7 = Label(window, text=text)
         lbl7.grid(column=0, row=0)
 
@@ -981,18 +1034,18 @@ class SeniorManagerUI:
         self.commentlabel = tk.Label(self.frame, text="Write comment:", anchor="w")
         self.comvalue = tk.StringVar()
         self.comboxlist = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist["values"] = ("A", "B", "C")
+        self.comboxlist["values"] = (self.employeeIDs)
         self.comboxlist.current(0)
         self.commententry = tk.Text(self.frame, width=40, height=10)
         self.sendcomment = tk.Button(self.frame, text="Send comments", command=self.writecomment)
         # Respond
-        self.respondlabel = tk.Label(self.frame, text="Write respond:", anchor="w")
+        self.respondlabel = tk.Label(self.frame, text="Write response:", anchor="w")
         self.comvalue_2 = tk.StringVar()
         self.comboxlist_2 = ttk.Combobox(self.frame, textvariable=self.comvalue)
-        self.comboxlist_2["values"] = ("A", "B", "C")
+        self.comboxlist_2["values"] = (self.employeeIDs)
         self.comboxlist_2.current(0)
         self.respondentry = tk.Text(self.frame, width=40, height=10)
-        self.sendrespond = tk.Button(self.frame, text="Send respond", command=self.writerespond)
+        self.sendrespond = tk.Button(self.frame, text="Send response", command=self.writerespond)
         # View Payroll
         self.payrolllabel = tk.Label(self.frame, text="Check monthly payroll:", anchor="w")
         self.viewpayroll = tk.Button(self.frame, text="View Payroll", command=self.view_payroll)
@@ -1029,7 +1082,7 @@ class SeniorManagerUI:
         self.logoutButton.grid(column=0, row=8)
         self.frame.pack()
 
-   def writecomment(self):
+    def writecomment(self):
         tmpcomment = self.commententry.get("1.0", "end-1c")
         targetemployee = self.comboxlist.get()
         if targetemployee != "":
@@ -1131,16 +1184,21 @@ class SeniorManagerUI:
         # database cursor
         cur = conn.cursor()
         # get password and authenticate login
-        ratingSql = ("select rr.reporter, rr.report, rc.comment from rating_report rr, rating_comment rc where rc.rating_report_id = rr.rating_report_id AND rr.reportee= %s")
+        
+        ratingSql = ("select rr.reporter, rr.report from rating_report rr where rr.reportee= %s")
         cur.execute(ratingSql, [self.employeeID])
         rows = cur.fetchall()
         ratings = ""
         for row in rows:
-            print( len(row))
-            if(len(row) > 2):
-                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + row[2]
-            else:
+            comments = []
+            try:
+                commentSql = ("select comment from rating_comment where rating_report_id = %s")                
+                cur.execute(commentSql, [row[1]])
+                comments = cur.fetchall()
+                ratings += "\nFrom "+row[0] +": \t" +row[1] + "\n\t Response: " + comments[0]
+            except:
                 ratings += "\nFrom "+row[0] +": \t" +row[1]
+                
         lbl1_2 = Label(window1, text=" " + ratings)
         lbl1_2.grid(column=0, row=1)
 
@@ -1195,20 +1253,51 @@ class SeniorManagerUI:
         window.geometry('500x300')
         label1 = Label(window, text="Decision type: ")
         label2 = Label(window, text="Targeting employee: ")
+        
+         # connect to database
+        try:
+            conn = psycopg2.connect("dbname='EPES' user='postgres' host='localhost' password='123'")
+        except:
+            print("I am unable to connect to the database")
+        # database cursor
+        cur = conn.cursor()
+        # get employee ids from database to populate dropdown 
+        eidSql = ("select employee_id from employee")
+        cur.execute(eidSql)
+        rows = cur.fetchall()
+        self.employeeIDs = []
+        for row in rows:
+            self.employeeIDs.append(row[0])
+            
         combo = Combobox(window)
         combo['values'] = ("Promotion", "Fire", "Salary")
         combo.current(0)  # set the selected item
         combo1 = Combobox(window)
-        combo1['values'] = ("A", "B", "C")
+        combo1['values'] = self.employeeIDs
         combo1.current(0)  # set the selected item
         detaillabel = Label(window, text="Decision details: ")
         changes = Text(window, width=40, height=10)
-
         def button():
-            print(combo.get() + " decision to Employee: " + combo1.get() + "\nDecision detail:\n" + changes.get("1.0",
-                                                                                                                "end-1c"))
-
-        btn = Button(window, text="Click Me", command=button)
+            try:                
+                toEmployee = combo1.get()
+                decisionID = combo.get()+toEmployee
+                decisionText = combo.get()+":"+toEmployee +":"+ str(changes.get("1.0", "end-1c"))
+                createDecisionSql = ("insert into decision (senior_manager, dept_manager, decision, decision_id) VALUES(%s, %s, %s, %s)")
+                cur.execute(createDecisionSql, [self.employeeID, "ed", decisionText, decisionID])
+                conn.commit()
+                window1 = Tk()
+                window1.title("Creation Success")
+                window1.geometry('150x50')
+                lbl1_1 = Label(window1, text="Created decision for ed.")
+                lbl1_1.grid(column=0, row=0)
+            except:
+                window1 = Tk()
+                window1.title("ERROR MESSAGE")
+                window1.geometry('200x50')
+                lbl1_1 = Label(window1, text="Decision already exists.")
+                lbl1_1.grid(column=0, row=0)
+    
+        btn = Button(window, text="Create", command=button)
         label1.grid(column=0, row=0)
         combo.grid(column=1, row=0)
         label2.grid(column=0, row=1)
