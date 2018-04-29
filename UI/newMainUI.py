@@ -686,6 +686,9 @@ class departmentStaffUI:
             lbl1_1 = Label(window1, text="Wrong input. Please type in only numbers.")
             lbl1_1.grid(column=0, row=0)
             
+    def execution(self):
+        newMainUI.HRpage(self.master, self.employeeID)
+        
     def logout(self):
         root.deiconify()
         self.master.destroy()
